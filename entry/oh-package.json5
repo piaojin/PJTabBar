@@ -1,0 +1,12 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "PJTabBar Example",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "@ohos/pjtabbar": "file:../pjtabbar_staticlibrary"
+  }
+}
+

@@ -1,0 +1,10 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/CRUDItemPage",
+    "pages/CustomIndicatorPage",
+    "pages/CustomItemPage",
+    "pages/CustomLeftAndRightViewPage",
+    "pages/CustomLayoutPage"
+  ]
+}
