@@ -48,6 +48,7 @@ struct Index {
             })
         }
       }
+      .mode(NavigationMode.Stack)
     }
     .justifyContent(FlexAlign.Center)
     .width('100%')

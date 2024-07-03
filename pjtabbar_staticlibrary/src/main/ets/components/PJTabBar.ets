@@ -1,7 +1,22 @@
-import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '../model/PJTabBarOptions'
-import {PJTabBarItem, PJTabBarItemInterface} from '../model/PJTabBarItem'
-import {PJTabBarItemAttribute} from '../model/PJTabBarItemAttribute'
+/*
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import display from '@ohos.display'
+import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '../models/PJTabBarOptions'
+import {PJTabBarItem, PJTabBarItemInterface} from '../models/PJTabBarItem'
+import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
 
 @Extend(Text) function ItemTextCommonExtend(isSelected: boolean, options: PJTabBarOptionsInterface) {
   .fontSize(isSelected ? options.selectedFontSize : options.fontSize)
@@ -104,7 +119,7 @@ export struct PJTabBar {
 
   private didUpdateOtions() {
     // 修复先将tabar滚到到底，在隐藏Left/Right Item时tabbar没更新xOffset
-    if (this.tabBarOptions.isHideRightItem || this.tabBarOptions.isHideLeftItem) {
+    if ((this.tabBarOptions.isHideRightItem && !this.tabBarOptions.isRightItemFixed) || (this.tabBarOptions.isHideLeftItem && !this.tabBarOptions.isLeftItemFixed)) {
       this.scroller.scrollTo({xOffset: this.scroller.currentOffset().xOffset - 1, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
     }
   }
@@ -227,9 +242,7 @@ export struct PJTabBar {
               let newIndicatorWidth = targetWidth > this.tabBarOptions.indicatorWidth ? targetWidth * movePercentage : targetWidth * (1 - movePercentage)
               this.tabBarOptions.indicatorWidth = newIndicatorWidth
             }
-            // console.info("********offset: " + offset + ", movePercentage: " + movePercentage + ",subIndicatorOffseX: " +subIndicatorOffsetX + ", targetIndex: " + targetIndex + ", currentIndex: " + currentIndex + ", subIndicatorOffseX * movePercentage: " + subIndicatorOffsetX * movePercentage)
           }
-
         }
       }
     }
@@ -298,6 +311,8 @@ export struct PJTabBar {
         this.onSelectItem(this.items[this.index], this.index)
       }
     })
+    // 修复先将tabar滚到到底，在删除Item时tabbar没更新xOffset
+    this.scroller.scrollTo({xOffset: this.scroller.currentOffset().xOffset - 1, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
     return deletedItems.length > 0 ? deletedItems[0] : undefined
   }
 
@@ -458,8 +473,22 @@ export struct PJTabBar {
       .edgeEffect(this.tabBarOptions.edgeEffect)
       .layoutWeight(1)
       .padding(this.tabBarOptions.tabBarContentMargin)
-      .onAreaChange((_, newArea: Area) => {
-        this.scrollHeight = newArea.height as number
+      .onAreaChange((oldArea: Area, newArea: Area) => {
+        if (oldArea.height !== newArea.height) {
+          this.scrollHeight = newArea.height as number
+        }
+
+        if (oldArea.width !== newArea.width) {
+          // 修复系统Scroll Bug: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移, 或者选中靠后的item时在横竖屏也会触发该Bug。
+          this.scroller.scrollEdge(Edge.Start)
+          let selectedIndexArea = this.attrs[this.index]
+          // 如果当前选中的item已经可见则不需要滚动item的位置
+          if (selectedIndexArea && !(selectedIndexArea.area.position.x >= 0 && ((selectedIndexArea.area.position.x as number) + (selectedIndexArea.area.width as number)) <= newArea.width)) {
+            this.delay(500, () => {
+              this.scrollItemToIndex(this.index)
+            })
+          }
+        }
       })
       .onScrollEdge((side: Edge) => {
         if (this.onScrollEdge) {

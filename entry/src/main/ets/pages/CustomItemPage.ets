@@ -69,6 +69,7 @@ struct CustomItemPage {
           .height('100%')
       }
       .title(this.titleBuilder())
+      .mode(NavigationMode.Stack)
     }
   }
 }

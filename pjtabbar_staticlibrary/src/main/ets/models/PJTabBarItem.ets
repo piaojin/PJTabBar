@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,18 @@
  * limitations under the License.
  */
 
-export {PJTabBar, PJTabBarController} from "./src/main/ets/components/PJTabBar"
-export {PJTabComponent, PJTabComponentController} from "./src/main/ets/components/PJTabComponent"
-export {PJTabBarItemInterface, PJTabBarItem} from "./src/main/ets/models/PJTabBarItem"
-export {PJTabBarItemAttribute} from "./src/main/ets/models/PJTabBarItemAttribute"
-export {PJTabBarOptionsInterface, PJTabBarOptions, PJIndicatorPosition, PJScrollStyle} from "./src/main/ets/models/PJTabBarOptions"
+export interface PJTabBarItemInterface {
+  title: string
+  index: number
+}
+
+@Observed
+export class PJTabBarItem implements PJTabBarItemInterface {
+  index: number = 0
+  title: string
+
+  constructor(title: string, index: number = 0) {
+    this.title = title
+    this.index = index
+  }
+}

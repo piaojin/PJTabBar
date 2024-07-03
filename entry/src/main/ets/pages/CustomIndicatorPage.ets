@@ -122,6 +122,7 @@ struct CustomIndicatorPage {
         }
       }
         .title(this.titleBuilder())
+      .mode(NavigationMode.Stack)
     }
   }
 }

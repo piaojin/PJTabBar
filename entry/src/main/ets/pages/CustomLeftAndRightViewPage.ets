@@ -148,6 +148,7 @@ struct CustomLeftAndRightViewPage {
         }
       }
       .title(this.titleBuilder())
+      .mode(NavigationMode.Stack)
     }
   }
 }

@@ -77,6 +77,7 @@ struct CRUDItemPage {
         }
       }
       .title(this.titleBuilder())
+      .mode(NavigationMode.Stack)
     }
   }
 }
