@@ -44,6 +44,7 @@ export struct PJTabBar {
   private hasInitData: boolean = false
   private hasInitTabPos: boolean = false
   @State private scrollHeight: number = 0
+  private scrollWidth: number = 0
   onSelectItem?: (item: PJTabBarItemInterface, index: number) => void
   // tabbar滚动到头
   onScrollEdge: (side: Edge) => void | null
@@ -478,6 +479,8 @@ export struct PJTabBar {
           this.scrollHeight = newArea.height as number
         }
 
+        this.scrollWidth = newArea.width as number
+
         if (oldArea.width !== newArea.width) {
           // 修复系统Scroll Bug: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移, 或者选中靠后的item时在横竖屏也会触发该Bug。
           this.scroller.scrollEdge(Edge.Start)
@@ -494,6 +497,7 @@ export struct PJTabBar {
         if (this.onScrollEdge) {
           this.onScrollEdge(side)
         }
+        this.fixScrollXoffsetIssueIfNeeded(side)
       })
 
       // 右侧固定住的附加视图
@@ -507,6 +511,24 @@ export struct PJTabBar {
     }
     // 这里控制scroll的位置，比如居上居下居中
     .alignItems(this.tabBarOptions.tabBarVerticalAlign)
+  }
+
+  /// Workaround方式修复系统BUG,效果不完美,但是勉强可以接受: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移，不知API12中该系统bug有没被修复。
+  private fixScrollXoffsetIssueIfNeeded(side: Edge) {
+    if (this.tabBarOptions.edgeEffect === EdgeEffect.Spring && this.tabBarOptions.scrollable === ScrollDirection.Horizontal && side === Edge.Center) {
+      if (this.attrs.length <= 0) {
+        return
+      }
+      let firstItemX = (this.attrs[0].area.position.x ?? 0) as number
+      let lastItemMaxX = (this.attrs[this.attrs.length - 1].area.position.x ?? 0) as number + (this.attrs[this.attrs.length - 1].area.width as number)
+     if ((lastItemMaxX - firstItemX) < this.scrollWidth) {
+       let scrollable = this.tabBarOptions.scrollable
+       this.tabBarOptions.scrollable = ScrollDirection.None
+       this.delay(300, () => {
+         this.tabBarOptions.scrollable = scrollable
+       })
+     }
+    }
   }
 }
 

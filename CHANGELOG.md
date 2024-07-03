@@ -9,6 +9,7 @@
     1. 由于本人没有Next开发权限，故还没适配OpenHarmony SDK:API12， 将来计划适配。
     2. 指示器跟随TabContent的滑动而联动。
     3. 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移，不知API12中该系统bug有没被修复。
+       修复方法见函数`fixScrollXoffsetIssueIfNeeded`
     4. 已知系统Scroll导致的bug, 当Scroll设置edgeEffect = EdgeEffect.Spring的情况下把TabBar滑动到低并且横竖屏切换Scroll会出现整体向右偏移，不知API12中该系统bug有没被修复。
     问题4目前的Workaround方式修复:
     ````
