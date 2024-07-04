@@ -6,7 +6,7 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@ohos/pjtabbar": "file:../pjtabbar_staticlibrary"
+    "@piaojin/pjtabbar": "file:../pjtabbar_staticlibrary"
   }
 }
 

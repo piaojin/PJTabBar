@@ -1,4 +1,4 @@
-import {PJTabComponent, PJTabComponentController, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions} from '@ohos/pjtabbar'
+import {PJTabComponent, PJTabComponentController, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions} from '@piaojin/pjtabbar'
 import router from '@ohos.router'
 
 @Entry

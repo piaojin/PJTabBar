@@ -30,7 +30,7 @@ PJTabBar是一个用于替换系统Tabs的控件，支持自定义指示器，Ta
 ## 下载安装
 
 ````
-ohpm install @ohos/pjtabbar
+ohpm install @piaojin/pjtabbar
 ````
 
 OpenHarmony ohpm环境配置等更多内容，请参考[如何安装OpenHarmony ohpm包](https://gitee.com/openharmony-tpc/docs/blob/master/OpenHarmony_har_usage.md)
