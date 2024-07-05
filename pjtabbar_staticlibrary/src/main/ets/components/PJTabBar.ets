@@ -437,6 +437,7 @@ export struct PJTabBar {
         }
         .height(this.tabBarOptions.isLeftItemSameHeightWithTabBar ? this.scrollHeight : null)
         .visibility(this.tabBarOptions.isHideLeftItem ? Visibility.None : Visibility.Visible)
+        .layoutWeight(this.tabBarOptions.isTabBarWidthFillParent ? 0 : 1)
       }
 
       // tabbar主体
@@ -469,6 +470,7 @@ export struct PJTabBar {
       .scrollBar(BarState.Off)
       .scrollable(this.tabBarOptions.scrollable)
       .width(this.tabBarOptions.isTabBarWidthFillParent ? '100%' : null)
+      .layoutWeight(this.tabBarOptions.isTabBarWidthFillParent ? 1 : 0)
       // 这里控制item的位置，比如居左居右
       .align(this.tabBarOptions.itemAlign)
       .edgeEffect(this.tabBarOptions.edgeEffect)
@@ -491,6 +493,7 @@ export struct PJTabBar {
         }
         .height(this.tabBarOptions.isRightItemSameHeightWithTabBar ? this.scrollHeight : null)
         .visibility(this.tabBarOptions.isHideRightItem ? Visibility.None : Visibility.Visible)
+        .layoutWeight(this.tabBarOptions.isTabBarWidthFillParent ? 0 : 1)
       }
     }
     // 这里控制scroll的位置，比如居上居下居中
