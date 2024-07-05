@@ -16,17 +16,17 @@
 export interface PJTabBarOptionsInterface {
   fontSize: number
   selectedFontSize?: number
-  fontColor: Color
-  selectedFontColor?: Color
+  fontColor: ResourceColor
+  selectedFontColor?: ResourceColor
   fontWeight: number | FontWeight | string
   selectedFontWeight?: number | FontWeight | string
   fontStyle?: FontStyle
   selectedFontStyle?: FontStyle
   fontFamily?: string | Resource
   textAlign?: TextAlign
-  itemBackgroundColor?: Color
-  selectedItemBackgroundColor?: Color
-  tabBarBackGround?: Color
+  itemBackgroundColor?: ResourceColor
+  selectedItemBackgroundColor?: ResourceColor
+  tabBarBackGround?: ResourceColor
   itemSpace?: number
   itemWidth?: number
   itemHeight?: number
@@ -42,7 +42,7 @@ export interface PJTabBarOptionsInterface {
   indicatorHeight?: number
   indicatorBorderRadius?: number
   indicatorMargin?: Margin
-  indicatorColor?: Color
+  indicatorColor?: ResourceColor
   indicatorPosition?: PJIndicatorPosition
   scrollStyle?: PJScrollStyle
   isSameWidthWithItem?: boolean
@@ -67,17 +67,17 @@ export interface PJTabBarOptionsInterface {
 export class PJTabBarOptions implements PJTabBarOptionsInterface {
   fontSize: number = 15
   selectedFontSize: number = 15
-  fontColor: Color = Color.Black
-  selectedFontColor: Color = Color.Blue
+  fontColor: ResourceColor = Color.Black
+  selectedFontColor: ResourceColor = Color.Blue
   fontWeight: number | FontWeight | string = FontWeight.Regular
   selectedFontWeight: number | FontWeight | string = FontWeight.Regular
   fontStyle: FontStyle = FontStyle.Normal
   selectedFontStyle: FontStyle = FontStyle.Normal
   fontFamily: string | Resource = ''
   textAlign: TextAlign = TextAlign.Center
-  itemBackgroundColor: Color = Color.Transparent
-  selectedItemBackgroundColor: Color = Color.Transparent
-  tabBarBackGround: Color = Color.White
+  itemBackgroundColor: ResourceColor = Color.Transparent
+  selectedItemBackgroundColor: ResourceColor = Color.Transparent
+  tabBarBackGround: ResourceColor = Color.White
   itemSpace: number = 20
   itemWidth?: number
   itemHeight?: number
@@ -92,7 +92,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   indicatorHeight: number = 4
   indicatorBorderRadius: number = 2
   indicatorMargin: Margin = {top: 10, bottom: 0, left: 0, right: 0}
-  indicatorColor: Color = Color.Blue
+  indicatorColor: ResourceColor = Color.Blue
   indicatorAnimationDuration: number = 300
   indicatorPosition: PJIndicatorPosition = PJIndicatorPosition.Bottom
   scrollStyle: PJScrollStyle = PJScrollStyle.Normal
