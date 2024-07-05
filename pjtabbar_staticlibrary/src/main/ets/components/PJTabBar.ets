@@ -473,6 +473,7 @@ export struct PJTabBar {
       .align(this.tabBarOptions.itemAlign)
       .edgeEffect(this.tabBarOptions.edgeEffect)
       .padding(this.tabBarOptions.tabBarContentMargin)
+      .border(this.tabBarOptions.tabBarBorder)
       .onAreaChange((oldArea: Area, newArea: Area) => {
         this.handleScrollAreaChanged(oldArea, newArea)
       })
