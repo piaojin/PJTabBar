@@ -468,11 +468,10 @@ export struct PJTabBar {
       .backgroundColor(this.tabBarOptions.tabBarBackGround)
       .scrollBar(BarState.Off)
       .scrollable(this.tabBarOptions.scrollable)
-      .width('100%')
+      .width(this.tabBarOptions.isTabBarWidthFillParent ? '100%' : null)
       // 这里控制item的位置，比如居左居右
       .align(this.tabBarOptions.itemAlign)
       .edgeEffect(this.tabBarOptions.edgeEffect)
-      .layoutWeight(1)
       .padding(this.tabBarOptions.tabBarContentMargin)
       .onAreaChange((oldArea: Area, newArea: Area) => {
         if (oldArea.height !== newArea.height) {

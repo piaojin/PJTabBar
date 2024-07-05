@@ -26,7 +26,6 @@ export interface PJTabBarOptionsInterface {
   textAlign?: TextAlign
   itemBackgroundColor?: ResourceColor
   selectedItemBackgroundColor?: ResourceColor
-  tabBarBackGround?: ResourceColor
   itemSpace?: number
   itemWidth?: number
   itemHeight?: number
@@ -57,8 +56,10 @@ export interface PJTabBarOptionsInterface {
   isHideLeftItem?: boolean
   isHideRightItem?: boolean
   edgeEffect?: EdgeEffect
+  tabBarBackGround?: ResourceColor
   // tabbar整个内容的间距
   tabBarContentMargin?: Margin
+  isTabBarWidthFillParent?: boolean
   // 使item尽量滚到中间位置
   optimizeOffsetX?: number
 }
@@ -77,7 +78,6 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   textAlign: TextAlign = TextAlign.Center
   itemBackgroundColor: ResourceColor = Color.Transparent
   selectedItemBackgroundColor: ResourceColor = Color.Transparent
-  tabBarBackGround: ResourceColor = Color.White
   itemSpace: number = 20
   itemWidth?: number
   itemHeight?: number
@@ -107,7 +107,9 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   isHideLeftItem: boolean = false
   isHideRightItem: boolean = false
   edgeEffect: EdgeEffect = EdgeEffect.Spring
+  tabBarBackGround: ResourceColor = Color.White
   tabBarContentMargin: Margin = {top: 0, bottom: 0, left: 0, right: 0}
+  isTabBarWidthFillParent?: boolean = true
   // 使item尽量滚到中间位置
   optimizeOffsetX: number = 120
 }
