@@ -474,23 +474,7 @@ export struct PJTabBar {
       .edgeEffect(this.tabBarOptions.edgeEffect)
       .padding(this.tabBarOptions.tabBarContentMargin)
       .onAreaChange((oldArea: Area, newArea: Area) => {
-        if (oldArea.height !== newArea.height) {
-          this.scrollHeight = newArea.height as number
-        }
-
-        this.scrollWidth = newArea.width as number
-
-        if (oldArea.width !== newArea.width) {
-          // 修复系统Scroll Bug: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移, 或者选中靠后的item时在横竖屏也会触发该Bug。
-          this.scroller.scrollEdge(Edge.Start)
-          let selectedIndexArea = this.attrs[this.index]
-          // 如果当前选中的item已经可见则不需要滚动item的位置
-          if (selectedIndexArea && !(selectedIndexArea.area.position.x >= 0 && ((selectedIndexArea.area.position.x as number) + (selectedIndexArea.area.width as number)) <= newArea.width)) {
-            this.delay(500, () => {
-              this.scrollItemToIndex(this.index)
-            })
-          }
-        }
+        this.handleScrollAreaChanged(oldArea, newArea)
       })
       .onScrollEdge((side: Edge) => {
         if (this.onScrollEdge) {
@@ -510,6 +494,31 @@ export struct PJTabBar {
     }
     // 这里控制scroll的位置，比如居上居下居中
     .alignItems(this.tabBarOptions.tabBarVerticalAlign)
+  }
+
+  private handleScrollAreaChanged(oldArea: Area, newArea: Area) {
+    if (oldArea.height !== newArea.height) {
+      this.scrollHeight = newArea.height as number
+    }
+
+    this.scrollWidth = newArea.width as number
+
+    if (oldArea.width !== newArea.width) {
+      if (this.tabBarOptions.edgeEffect === EdgeEffect.Spring) {
+        // 修复系统Scroll Bug: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移, 或者选中靠后的item时在横竖屏也会触发该Bug。
+        this.scroller.scrollEdge(Edge.Start)
+      }
+
+      if (this.tabBarOptions.shouldScrollToCurrentIndexWhenTabBarWidthChanged) {
+        let selectedIndexArea = this.attrs[this.index]
+        // 如果当前选中的item已经可见则不需要滚动item的位置
+        if (selectedIndexArea && !(selectedIndexArea.area.position.x >= 0 && ((selectedIndexArea.area.position.x as number) + (selectedIndexArea.area.width as number)) <= newArea.width)) {
+          this.delay(500, () => {
+            this.scrollItemToIndex(this.index)
+          })
+        }
+      }
+    }
   }
 
   /// Workaround方式修复系统BUG,效果不完美,但是勉强可以接受: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移，不知API12中该系统bug有没被修复。
