@@ -120,6 +120,8 @@ PJTabComponent({
 | `isHideRightItem: boolean`                         |                                            是否隐藏TabBar右侧附加视图，默认值false |
 | `edgeEffect: EdgeEffect`                           |                                TabBar滚动到边缘的动画效果，默认值EdgeEffect.Spring |
  | `tabBarContentMargin: Margin`                      |            TabBar内容的Margin,默认值{top: 0, bottom: 0, left: 0, right: 0} |
+| `isTabBarWidthFillParent?: boolean`|                                              TabBar宽度是否撑满父组件，默认值true |
+| `shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean`|               TabBar宽度变化后(比如横竖屏切换)当选中的item不可见时是否自动滚动到选中的item，默认值true |
 | `optimizeOffsetX: number`                          |                   item被选中时滚动到item的附加偏移量，目的是让被选中的item尽量滚动到中间位置，默认值120 |
 
 
