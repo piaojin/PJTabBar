@@ -1,4 +1,4 @@
-import {PJTabComponent, PJIndicatorPosition, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions} from '@piaojin/pjtabbar'
+import {PJTabComponent, PJTabBar, PJIndicatorPosition, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions} from '@piaojin/pjtabbar'
 import router from '@ohos.router'
 
 @Entry
@@ -10,6 +10,10 @@ struct CustomIndicatorPage {
   private options1: PJTabBarOptionsInterface = new PJTabBarOptions()
   private options2: PJTabBarOptionsInterface = new PJTabBarOptions()
   private options3: PJTabBarOptionsInterface = new PJTabBarOptions()
+
+  @State private segmentIndex: number = 0
+  @State private segmentItems: PJTabBarItem [] = [new PJTabBarItem('素材'), new PJTabBarItem('字条')]
+  @State private segmentOptions: PJTabBarOptions = new PJTabBarOptions()
 
   aboutToAppear() {
     this.options1.indicatorWidth = 30
@@ -29,6 +33,21 @@ struct CustomIndicatorPage {
     this.options3.indicatorColor= Color.Yellow
     this.options3.itemMargin = {top: 6, bottom: 6, left: 10, right: 10}
     this.options3.indicatorBorderRadius = 20
+
+    this.segmentOptions.isSameWidthWithItem = true
+    this.segmentOptions.isSameHeightWithItem = true
+    this.segmentOptions.indicatorPosition = PJIndicatorPosition.Center
+    this.segmentOptions.indicatorBorderRadius = 12
+    this.segmentOptions.indicatorColor = Color.White
+    this.segmentOptions.tabBarBackGround = '#F5F4F5'
+    this.segmentOptions.selectedFontColor = '#626262'
+    this.segmentOptions.itemMargin = {top: 4, bottom: 4, left: 15, right: 15}
+    this.segmentOptions.itemSpace = 10
+    this.segmentOptions.tabBarContentMargin = {top: 2, bottom: 2, left: 2, right: 2}
+    this.segmentOptions.edgeEffect = EdgeEffect.None
+    this.segmentOptions.scrollable = ScrollDirection.None
+    this.segmentOptions.isTabBarWidthFillParent = false
+    this.segmentOptions.tabBarBorder = {radius: 14}
   }
 
   @Builder titleBuilder() {
@@ -116,7 +135,21 @@ struct CustomIndicatorPage {
             })
           }
           .width('100%')
-          .height(300)
+          .height(100)
+          .margin({top: 30})
+
+          ListItem() {
+            Column({space: 10}) {
+              Text('单独使用PJTabBbar模拟iOS风格Segment')
+              Row() {
+                PJTabBar({index: $segmentIndex, items: $segmentItems, tabBarOptions: $segmentOptions})
+              }
+              .width('100%')
+              .justifyContent(FlexAlign.Center)
+            }
+          }
+          .width('100%')
+          .height(150)
           .margin({top: 30})
 
         }
