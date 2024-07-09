@@ -29,6 +29,8 @@ import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
 
 @Component
 export struct PJTabBar {
+  // 第一次设置的index, 用于计算indicatorOffsetX
+  private defaultIndex: number = 0
   @Link index: number
   @Link @Watch('updateItems') items: PJTabBarItem[]
   // tabbar配置
@@ -37,8 +39,6 @@ export struct PJTabBar {
   private scroller: Scroller = new Scroller()
   // indicator移动的距离, 即移动到选中的item的centerX下
   @State private indicatorOffsetX: number = 0
-  // 第一次设置的index, 用于计算indicatorOffsetX
-  @State private defaultIndex: number = 0
   // item坐标数据
   private attrs: PJTabBarItemAttribute[] = []
   private hasInitData: boolean = false

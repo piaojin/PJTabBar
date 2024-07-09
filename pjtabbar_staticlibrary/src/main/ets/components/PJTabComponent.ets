@@ -23,7 +23,7 @@ export struct PJTabComponent {
   private tabBarController: PJTabBarController = new PJTabBarController()
   private hasInit: boolean = false
 
-  @State index: number = 4
+  @State index: number = 0
   @State items: PJTabBarItemInterface[] = []
   @State @Watch('didUpdateTabBarOptions') tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
   controller: PJTabComponentController | null
