@@ -8,23 +8,23 @@ PJTabBar是一个用于替换系统Tabs的控件，支持自定义指示器，Ta
 
 **自定义指示器:**
 
-<img src="../gifs/custom_indicator.gif"/>
+<img src="./gifs/custom_indicator.gif"/>
 
 **自定义Tabbar Item:**
 
-<img src="../gifs/custom_item.gif"/>
+<img src="./gifs/custom_item.gif"/>
 
 **自定义Item的布局:**
 
-<img src="../gifs/custom_layout.gif"/>
+<img src="./gifs/custom_layout.gif"/>
 
 **自定义Tabbar左右的附加视图:**
 
-<img src="../gifs/custom_left_and_right.gif"/>
+<img src="./gifs/custom_left_and_right.gif"/>
 
 **更新插入删除自定义Tabbar Item:**
 
-<img src="../gifs/custom_crud.gif"/>
+<img src="./gifs/custom_crud.gif"/>
 
 
 ## 下载安装
