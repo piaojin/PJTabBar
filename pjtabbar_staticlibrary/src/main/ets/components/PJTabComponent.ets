@@ -128,6 +128,7 @@ export struct PJTabComponent {
             }
           }
           .align(Alignment.TopStart)
+          .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
           // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
           // .onTouch((event) => {
           //   this.tabBarController.onTouchPage(event, this.index)
