@@ -145,9 +145,7 @@ PJTabComponent({
 
 在下述版本验证通过：
 
-- DevEco Studio 版本： DevEco Studio 3.1.1 Release(3.1.0.501)
-
-- OpenHarmony SDK:API9 (3.2.12.5)
+- DevEco Studio: NEXT Developer Beta1, SDK: API12(5.0.0)
 
 ## 目录结构
 
