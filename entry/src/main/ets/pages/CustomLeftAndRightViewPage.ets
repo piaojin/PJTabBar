@@ -93,8 +93,10 @@ struct CustomLeftAndRightViewPage {
               items: this.items,
               tabBarOptions: this.options1,
               contentBuilder: this.contentBuilder,
-              leftItemBuilder: this.leftItemBuilder,
-              rightItemBuilder: this.rightItemBuilder
+              builder: {
+                leftItemBuilder: this.leftItemBuilder,
+                rightItemBuilder: this.rightItemBuilder
+              }
             })
           }
           .width('100%')
@@ -122,8 +124,10 @@ struct CustomLeftAndRightViewPage {
               items: this.items,
               tabBarOptions: this.options2,
               contentBuilder: this.contentBuilder,
-              leftItemBuilder: this.leftItemBuilder2,
-              rightItemBuilder: this.rightItemBuilder2
+              builder: {
+                leftItemBuilder: this.leftItemBuilder2,
+                rightItemBuilder: this.rightItemBuilder2
+              }
             })
           }
           .width('100%')
@@ -146,6 +150,8 @@ struct CustomLeftAndRightViewPage {
           }
 
         }
+        .width('100%')
+        .height('100%')
       }
       .title(this.titleBuilder())
       .mode(NavigationMode.Stack)

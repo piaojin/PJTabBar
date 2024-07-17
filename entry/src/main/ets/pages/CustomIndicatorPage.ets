@@ -121,8 +121,12 @@ struct CustomIndicatorPage {
 
           ListItem() {
             PJTabComponent({index: 2, items: this.items, tabBarOptions: this.options2,
-              contentBuilder: this.contentBuilder2.bind(this),
-              customerIndicatorBuilder: this.customerIndicatorBuilderImage
+              contentBuilder: (item: PJTabBarItemInterface, index: number) => {
+                  this.contentBuilder2(item, index)
+              },
+              builder: {
+                customerIndicatorBuilder: this.customerIndicatorBuilderImage
+              }
             })
           }
           .width('100%')

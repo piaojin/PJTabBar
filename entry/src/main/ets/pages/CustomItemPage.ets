@@ -63,7 +63,9 @@ struct CustomItemPage {
       Navigation() {
         PJTabComponent({index: 0, items: this.items, tabBarOptions: this.options,
           contentBuilder: this.contentBuilder,
-          customerItemBuilder: this.customerItemBuilder
+          builder: {
+            customerItemBuilder: this.customerItemBuilder
+          }
         })
           .width('100%')
           .height('100%')

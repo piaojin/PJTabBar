@@ -59,7 +59,10 @@ this.options.tabBarContentMargin = {left: 10, right: 10}
 PJTabComponent({
    items: this.items,
    tabBarOptions: this.options,
-   contentBuilder: this.contentBuilder,
+   // 注意contentBuilder的传值方式，这种方式下contentBuilder中的this才是正确的。
+   contentBuilder: (item: PJTabBarItemInterface, index: number) => {
+       this.contentBuilder(item, index)
+   },
 })
 
 @Builder contentBuilder(item: PJTabBarItemInterface, index: number) {
@@ -69,6 +72,19 @@ PJTabComponent({
     .textAlign(TextAlign.Center)
     .backgroundColor(Color.Green)
 }
+````
+
+<font face="微软雅黑" size=5 color=#FF0000 >注意:</font>
+```contentBuilder```的传值方式，这种方式下```contentBuilder```中的```this```才是正确的。
+````
+PJTabComponent({
+   items: this.items,
+   tabBarOptions: this.options,
+   // 注意contentBuilder的传值方式，这种方式下contentBuilder中的this才是正确的。
+   contentBuilder: (item: PJTabBarItemInterface, index: number) => {
+       this.contentBuilder(item, index)
+   },
+})
 ````
 
 更多详细用法请参考开源库sample页面的实现

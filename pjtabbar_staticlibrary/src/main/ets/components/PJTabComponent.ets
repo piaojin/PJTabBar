@@ -16,6 +16,7 @@
 import {PJTabBarOptionsInterface, PJTabBarOptions} from '../models/PJTabBarOptions'
 import {PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBar, PJTabBarController} from './PJTabBar'
+import {PJBuilder} from '../models/PJBuilder'
 
 @Component
 export struct PJTabComponent {
@@ -25,28 +26,22 @@ export struct PJTabComponent {
 
   @State index: number = 0
   @State items: PJTabBarItemInterface[] = []
-  @State @Watch('didUpdateTabBarOptions') tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
-  controller: PJTabComponentController | null
+  @State tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
+  controller?: PJTabComponentController | null
 
   // 点击了item
-  onClickTabBarItem: (item: PJTabBarItemInterface, index: number) => void | null
+  onClickTabBarItem?: (item: PJTabBarItemInterface, index: number) => void | null
   // 切换了item
-  onChangeTabBarItem: (item: PJTabBarItemInterface, index: number) => void | null
+  onChangeTabBarItem?: (item: PJTabBarItemInterface, index: number) => void | null
   // 切换了page
-  onChangePage: (item: PJTabBarItemInterface, index: number) => void | null
-  // tabbar滚动到头
-  onScrollEdge: (side: Edge) => void | null
+  onChangePage?: (item: PJTabBarItemInterface, index: number) => void | null
+  // Tabbar滚动到头
+  onScrollEdge?: (side: Edge) => void | null
+
+  builder: PJBuilder = new PJBuilder()
 
   // 自定义page内容视图
-  @BuilderParam contentBuilder?: (item: PJTabBarItemInterface, index: number) => void | null = null
-  // 自定义item视图
-  @BuilderParam customerItemBuilder?: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void | null = null
-  // 自定义Indicator，不需要设置width和height
-  @BuilderParam customerIndicatorBuilder?: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void | null = null
-  // 左边附加视图
-  @BuilderParam leftItemBuilder?: () => void | null = null
-  // 右边附加视图
-  @BuilderParam rightItemBuilder?: () => void | null = null
+  @Require @BuilderParam contentBuilder: (item: PJTabBarItemInterface, index: number) => void
 
   aboutToAppear() {
     if (!this.hasInit) {
@@ -66,11 +61,6 @@ export struct PJTabComponent {
     this.tabsController.changeIndex(index)
   }
 
-  private didUpdateTabBarOptions() {
-    // TODO: Update indicator pos
-    // this.tabBarController.selectItemAtIndex(this.index)
-  }
-
   /// CRUD Actions
 
   update(index: number, item: PJTabBarItemInterface) {
@@ -81,16 +71,16 @@ export struct PJTabComponent {
     this.tabBarController.insert(atIndex, item)
   }
 
-  delete(atIndex: number): PJTabBarItemInterface | undefined {
+  delete(atIndex: number): PJTabBarItemInterface | null {
     return this.tabBarController.delete(atIndex)
   }
 
-  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): number {
-    return this.tabBarController.findIndex(predicate)
+  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
+    return this.tabBarController.findIndex(predicate, thisArg)
   }
 
-  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): PJTabBarItemInterface | undefined {
-    return this.tabBarController.find(predicate)
+  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface | undefined {
+    return this.tabBarController.find(predicate, thisArg)
   }
 
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
@@ -100,10 +90,7 @@ export struct PJTabComponent {
   build() {
     Column() {
       PJTabBar({index: $index, items: $items, tabBarOptions: $tabBarOptions, controller: this.tabBarController,
-        customerItemBuilder: this.customerItemBuilder,
-        customerIndicatorBuilder: this.customerIndicatorBuilder,
-        leftItemBuilder: this.leftItemBuilder,
-        rightItemBuilder: this.rightItemBuilder,
+        builder: this.builder,
         onSelectItem: (item: PJTabBarItemInterface, index: number) => {
           this.tabsController.changeIndex(index)
           if (this.onClickTabBarItem) {
@@ -121,11 +108,9 @@ export struct PJTabComponent {
         }})
 
       Tabs({controller: this.tabsController, index: this.index}) {
-        ForEach(this.items, (item, index) => {
+        ForEach(this.items, (item: PJTabBarItemInterface, index) => {
           TabContent() {
-            if (this.contentBuilder) {
-              this.contentBuilder(item, index)
-            }
+            this.contentBuilder(item, index)
           }
           .align(Alignment.TopStart)
           .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
@@ -152,9 +137,11 @@ export struct PJTabComponent {
   }
 }
 
+class PJTabComponentControllerKey {}
+
 export class PJTabComponentController {
   private weakMap = new WeakMap<object, PJTabComponent>()
-  private key = {}
+  private key: PJTabComponentControllerKey = {}
 
   currentIndex(): number {
     return this.weakMap.get(this.key)?.currentIndex() ?? 0
@@ -177,15 +164,19 @@ export class PJTabComponentController {
   }
 
   delete(atIndex: number): PJTabBarItemInterface | null {
-    return this.weakMap.get(this.key)?.delete(atIndex)
+    let tabBar = this.weakMap.get(this.key)
+    if (tabBar) {
+      return tabBar.delete(atIndex)
+    }
+    return null
   }
 
-  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): number {
-    return this.weakMap.get(this.key)?.findIndex(predicate) ?? -1
+  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
+    return this.weakMap.get(this.key)?.findIndex(predicate, thisArg) ?? -1
   }
 
-  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): PJTabBarItemInterface | undefined {
-    return this.weakMap.get(this.key)?.find(predicate)
+  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface | undefined {
+    return this.weakMap.get(this.key)?.find(predicate, thisArg)
   }
 
   getItem(atIndex: number): PJTabBarItemInterface | undefined {

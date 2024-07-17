@@ -1,3 +1,9 @@
+## v1.0.2 [2024.07.17]
+1. 适配API12
+2. 修复TabContent底部超出大概42vp屏幕问题
+3. 修复简介Demo gif加载不出来问题
+4. 版本v1.0.0中的bug iii,iv验证在API12下已被系统修复，并删除相应Workaround修复方法。
+
 ## v1.0.1 [2024.07.09]
 1. 修复PJComponent index默认值为4问题
 2. 修复简介Demo gif加载不出来问题

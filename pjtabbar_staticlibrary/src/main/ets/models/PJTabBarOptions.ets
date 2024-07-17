@@ -111,7 +111,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   edgeEffect: EdgeEffect = EdgeEffect.Spring
   tabBarBackGround: ResourceColor = Color.White
   tabBarContentMargin: Margin = {top: 0, bottom: 0, left: 0, right: 0}
-  tabBarBorder?: BorderOptions = null
+  tabBarBorder?: BorderOptions = undefined
   isTabBarWidthFillParent?: boolean = true
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean = true
   // 使item尽量滚到中间位置

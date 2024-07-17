@@ -18,3 +18,4 @@ export {PJTabComponent, PJTabComponentController} from "./src/main/ets/component
 export {PJTabBarItemInterface, PJTabBarItem} from "./src/main/ets/models/PJTabBarItem"
 export {PJTabBarItemAttribute} from "./src/main/ets/models/PJTabBarItemAttribute"
 export {PJTabBarOptionsInterface, PJTabBarOptions, PJIndicatorPosition, PJScrollStyle} from "./src/main/ets/models/PJTabBarOptions"
+export {PJBuilder} from "./src/main/ets/models/PJBuilder"

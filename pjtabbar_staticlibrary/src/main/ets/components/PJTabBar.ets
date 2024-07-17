@@ -15,8 +15,9 @@
 
 import display from '@ohos.display'
 import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '../models/PJTabBarOptions'
-import {PJTabBarItem, PJTabBarItemInterface} from '../models/PJTabBarItem'
+import {PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
+import {PJBuilder} from '../models/PJBuilder'
 
 @Extend(Text) function ItemTextCommonExtend(isSelected: boolean, options: PJTabBarOptionsInterface) {
   .fontSize(isSelected ? options.selectedFontSize : options.fontSize)
@@ -32,10 +33,10 @@ export struct PJTabBar {
   // 第一次设置的index, 用于计算indicatorOffsetX
   private defaultIndex: number = 0
   @Link index: number
-  @Link @Watch('updateItems') items: PJTabBarItem[]
+  @Link @Watch('updateItems') items: PJTabBarItemInterface[]
   // tabbar配置
-  @Link @Watch('didUpdateOtions') tabBarOptions: PJTabBarOptionsInterface
-  controller: PJTabBarController | null
+  @Link tabBarOptions: PJTabBarOptionsInterface
+  controller?: PJTabBarController | null
   private scroller: Scroller = new Scroller()
   // indicator移动的距离, 即移动到选中的item的centerX下
   @State private indicatorOffsetX: number = 0
@@ -44,19 +45,22 @@ export struct PJTabBar {
   private hasInitData: boolean = false
   private hasInitTabPos: boolean = false
   @State private scrollHeight: number = 0
-  private scrollWidth: number = 0
   onSelectItem?: (item: PJTabBarItemInterface, index: number) => void
   // tabbar滚动到头
-  onScrollEdge: (side: Edge) => void | null
+  onScrollEdge?: (side: Edge) => void | null
+
+  builder: PJBuilder = new PJBuilder()
 
   // 自定义item视图
-  @BuilderParam customerItemBuilder?: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void | null = null
+  @BuilderParam private customerItemBuilder: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void = this.nullBuilder
   // 自定义Indicator，不需要设置width和height
-  @BuilderParam customerIndicatorBuilder?: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void | null = null
+  @BuilderParam private customerIndicatorBuilder: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void = this.nullBuilder
   // 左边附加视图
-  @BuilderParam leftItemBuilder?: () => void | null = null
+  @BuilderParam private leftItemBuilder: () => void = this.nullBuilder
   // 右边附加视图
-  @BuilderParam rightItemBuilder?: () => void | null = null
+  @BuilderParam private rightItemBuilder: () => void = this.nullBuilder
+
+  @Builder nullBuilder() {}
 
   // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
   private moveStartX: number = 0
@@ -71,6 +75,11 @@ export struct PJTabBar {
   }
 
   private initData() {
+    this.customerItemBuilder = this.builder.customerItemBuilder ?? this.nullBuilder
+    this.customerIndicatorBuilder = this.builder.customerIndicatorBuilder ?? this.nullBuilder
+    this.leftItemBuilder = this.builder.leftItemBuilder ?? this.nullBuilder
+    this.rightItemBuilder = this.builder.rightItemBuilder ?? this.nullBuilder
+
     if (!this.tabBarOptions) {
       this.tabBarOptions = new PJTabBarOptions()
     }
@@ -97,9 +106,9 @@ export struct PJTabBar {
   }
 
   // item坐标大小变化
-  private didAreaChange(ofIndex: number, oldArea: Area, newArea: Area) {
+  private didAreaChange(ofIndex: number, newArea: Area) {
     // 更新保存所有item的position
-    this.updateItemAttribute(ofIndex, {area: newArea})
+    this.updateItemAttribute(ofIndex, new PJTabBarItemAttribute(newArea))
     // 第一次加载出来滚动到默认选中的item位置
     if (!this.hasInitTabPos && this.index === ofIndex) {
       this.hasInitTabPos = true
@@ -116,13 +125,6 @@ export struct PJTabBar {
 
   private updateItemAttribute(index: number, attr: PJTabBarItemAttribute) {
     this.attrs[index] = attr
-  }
-
-  private didUpdateOtions() {
-    // 修复先将tabar滚到到底，在隐藏Left/Right Item时tabbar没更新xOffset
-    if ((this.tabBarOptions.isHideRightItem && !this.tabBarOptions.isRightItemFixed) || (this.tabBarOptions.isHideLeftItem && !this.tabBarOptions.isLeftItemFixed)) {
-      this.scroller.scrollTo({xOffset: this.scroller.currentOffset().xOffset - 1, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
-    }
   }
 
   /// 滚动indicator到新选中的item位置
@@ -164,8 +166,9 @@ export struct PJTabBar {
     if (index < this.attrs.length) {
       let attr = this.attrs[index]
       if (attr) {
+        let optimizeOffsetX = this.tabBarOptions.optimizeOffsetX ?? 0
         // 使item尽量滚到中间位置
-        this.scroller.scrollTo({xOffset: (attr.area.position.x as number) - this.tabBarOptions.optimizeOffsetX, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
+        this.scroller.scrollTo({xOffset: (attr.area.position.x as number) - optimizeOffsetX, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
       }
     }
   }
@@ -201,7 +204,7 @@ export struct PJTabBar {
   }
 
   private delay(duration: number, handler: () => void) {
-    new Promise<void>((resolve, reject) => {
+    new Promise<void>((resolve, _) => {
       setTimeout(() => {
         resolve()
       }, duration)
@@ -240,8 +243,10 @@ export struct PJTabBar {
             this.indicatorOffsetX = this.tempOffsetX + subIndicatorOffsetX * movePercentage
             if (this.tabBarOptions.isSameWidthWithItem) {
               let targetWidth = this.getItemWidth(targetIndex)
-              let newIndicatorWidth = targetWidth > this.tabBarOptions.indicatorWidth ? targetWidth * movePercentage : targetWidth * (1 - movePercentage)
-              this.tabBarOptions.indicatorWidth = newIndicatorWidth
+              if (targetWidth) {
+                let newIndicatorWidth = targetWidth > (this.tabBarOptions.indicatorWidth ?? 20) ? targetWidth * movePercentage : targetWidth * (1 - movePercentage)
+                this.tabBarOptions.indicatorWidth = newIndicatorWidth
+              }
             }
           }
         }
@@ -265,13 +270,17 @@ export struct PJTabBar {
       this.moveEndTime = 0
 
       if (movePercentage >= 0.5) {
-        this.delay(this.tabBarOptions.indicatorAnimationDuration, () => {
-          this.scrollIndicatorToIndex(this.index + (offset > 0 ? -1 : 1))
-        })
+        if (this.tabBarOptions.indicatorAnimationDuration) {
+          this.delay(this.tabBarOptions.indicatorAnimationDuration, () => {
+            this.scrollIndicatorToIndex(this.index + (offset > 0 ? -1 : 1))
+          })
+        }
       } else {
-        this.delay(this.tabBarOptions.indicatorAnimationDuration, () => {
-          this.scrollIndicatorToIndex(this.index)
-        })
+        if (this.tabBarOptions.indicatorAnimationDuration) {
+          this.delay(this.tabBarOptions.indicatorAnimationDuration, () => {
+            this.scrollIndicatorToIndex(this.index)
+          })
+        }
       }
     }
   }
@@ -292,15 +301,15 @@ export struct PJTabBar {
     })
   }
 
-  delete(atIndex: number): PJTabBarItemInterface | undefined {
+  delete(atIndex: number): PJTabBarItemInterface | null {
     if (atIndex >= this.items.length) {
-      return undefined
+      return null
     }
 
     let hasChangeIndex: boolean = false
     if (atIndex < this.index) {
       this.index -= 1
-    } else if (atIndex === this.index) {
+    } else if (atIndex === this.index) { // 如果删除的是当前选中的item,则默认重新选中第一个item。
       this.index = 0
       hasChangeIndex = true
     }
@@ -308,21 +317,22 @@ export struct PJTabBar {
     let deletedItems = this.items.splice(atIndex, 1)
     this.delay(200, () => {
       this.scrollIndicatorToIndex(this.index)
-      if (hasChangeIndex && this.onSelectItem) {
-        this.onSelectItem(this.items[this.index], this.index)
+      if (hasChangeIndex) {
+        this.scrollItemToIndex(this.index)
+        if (this.onSelectItem) {
+          this.onSelectItem(this.items[this.index], this.index)
+        }
       }
     })
-    // 修复先将tabar滚到到底，在删除Item时tabbar没更新xOffset
-    this.scroller.scrollTo({xOffset: this.scroller.currentOffset().xOffset - 1, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
-    return deletedItems.length > 0 ? deletedItems[0] : undefined
+    return deletedItems.length > 0 ? deletedItems[0] : null
   }
 
-  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): number {
-    return this.items.findIndex(predicate)
+  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
+    return this.items.findIndex(predicate, thisArg)
   }
 
-  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): PJTabBarItemInterface | undefined {
-    return this.items.find(predicate)
+  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface | undefined {
+    return this.items.find(predicate, thisArg)
   }
 
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
@@ -362,8 +372,8 @@ export struct PJTabBar {
         }
       }
     }
-    .onAreaChange((oldArea, newArea) => {
-      this.didAreaChange(index, oldArea, newArea)
+    .onAreaChange((_, newArea) => {
+      this.didAreaChange(index, newArea)
     })
     .onClick(() => {
       this.selectItemAtIndex(index)
@@ -380,7 +390,7 @@ export struct PJTabBar {
       if (this.defaultIndex === index) {
         Column() {
           Column() {
-            if (this.customerIndicatorBuilder) {
+            if (this.customerIndicatorBuilder !== this.nullBuilder) {
               Column() {
                 this.customerIndicatorBuilder(item, this.tabBarOptions, index)
               }
@@ -413,7 +423,7 @@ export struct PJTabBar {
   }
 
   @Builder private textBuilder(item: PJTabBarItemInterface, index: number) {
-    if (this.customerItemBuilder) {
+    if (this.customerItemBuilder !== this.nullBuilder) {
       // 启用外部自定义的Item
       this.customerItemBuilder(item, this.tabBarOptions, index)
     } else {
@@ -431,7 +441,7 @@ export struct PJTabBar {
   build() {
     Row() {
       // 左侧固定住的附加视图
-      if (this.leftItemBuilder && this.tabBarOptions.isLeftItemFixed) {
+      if (this.leftItemBuilder !== this.nullBuilder && this.tabBarOptions.isLeftItemFixed) {
         Column() {
           this.leftItemBuilder()
         }
@@ -444,7 +454,7 @@ export struct PJTabBar {
       Scroll(this.scroller) {
         Row({space: this.tabBarOptions.itemSpace}) {
           // 左侧附加视图
-          if (this.leftItemBuilder && !this.tabBarOptions.isLeftItemFixed) {
+          if (this.leftItemBuilder !== this.nullBuilder && !this.tabBarOptions.isLeftItemFixed) {
             Column() {
               this.leftItemBuilder()
             }
@@ -452,12 +462,12 @@ export struct PJTabBar {
             .visibility(this.tabBarOptions.isHideLeftItem ? Visibility.None : Visibility.Visible)
           }
 
-          ForEach(this.items, (item, index) => {
+          ForEach(this.items, (item: PJTabBarItemInterface, index) => {
             this.itemBuilder(item, index)
           }, (item: PJTabBarItemInterface) => item.index.toString() + '_' + item.title)
 
           // 右侧附加视图
-          if (this.rightItemBuilder && !this.tabBarOptions.isRightItemFixed) {
+          if (this.rightItemBuilder !== this.nullBuilder && !this.tabBarOptions.isRightItemFixed) {
             Column() {
               this.rightItemBuilder()
             }
@@ -483,11 +493,10 @@ export struct PJTabBar {
         if (this.onScrollEdge) {
           this.onScrollEdge(side)
         }
-        this.fixScrollXoffsetIssueIfNeeded(side)
       })
 
       // 右侧固定住的附加视图
-      if (this.rightItemBuilder && this.tabBarOptions.isRightItemFixed) {
+      if (this.rightItemBuilder !== this.nullBuilder && this.tabBarOptions.isRightItemFixed) {
         Column() {
           this.rightItemBuilder()
         }
@@ -505,48 +514,28 @@ export struct PJTabBar {
       this.scrollHeight = newArea.height as number
     }
 
-    this.scrollWidth = newArea.width as number
-
     if (oldArea.width !== newArea.width) {
-      if (this.tabBarOptions.edgeEffect === EdgeEffect.Spring) {
-        // 修复系统Scroll Bug: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移, 或者选中靠后的item时在横竖屏也会触发该Bug。
-        this.scroller.scrollEdge(Edge.Start)
-      }
-
       if (this.tabBarOptions.shouldScrollToCurrentIndexWhenTabBarWidthChanged) {
         let selectedIndexArea = this.attrs[this.index]
         // 如果当前选中的item已经可见则不需要滚动item的位置
-        if (selectedIndexArea && !(selectedIndexArea.area.position.x >= 0 && ((selectedIndexArea.area.position.x as number) + (selectedIndexArea.area.width as number)) <= newArea.width)) {
-          this.delay(500, () => {
-            this.scrollItemToIndex(this.index)
-          })
+        if (selectedIndexArea) {
+          let x = selectedIndexArea.area.position.x
+          if (x && !(x >= 0 && ((x as number) + (selectedIndexArea.area.width as number)) <= newArea.width)) {
+            this.delay(500, () => {
+              this.scrollItemToIndex(this.index)
+            })
+          }
         }
       }
     }
   }
-
-  /// Workaround方式修复系统BUG,效果不完美,但是勉强可以接受: 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移，不知API12中该系统bug有没被修复。
-  private fixScrollXoffsetIssueIfNeeded(side: Edge) {
-    if (this.tabBarOptions.edgeEffect === EdgeEffect.Spring && this.tabBarOptions.scrollable === ScrollDirection.Horizontal && side === Edge.Center) {
-      if (this.attrs.length <= 0) {
-        return
-      }
-      let firstItemX = (this.attrs[0].area.position.x ?? 0) as number
-      let lastItemMaxX = (this.attrs[this.attrs.length - 1].area.position.x ?? 0) as number + (this.attrs[this.attrs.length - 1].area.width as number)
-     if ((lastItemMaxX - firstItemX) < this.scrollWidth) {
-       let scrollable = this.tabBarOptions.scrollable
-       this.tabBarOptions.scrollable = ScrollDirection.None
-       this.delay(300, () => {
-         this.tabBarOptions.scrollable = scrollable
-       })
-     }
-    }
-  }
 }
+
+class PJTabBarControllerKey {}
 
 export class PJTabBarController {
   private weakMap = new WeakMap<object, PJTabBar>()
-  private key = {}
+  private key: PJTabBarControllerKey = {}
 
   currentIndex(): number {
     return this.weakMap.get(this.key)?.index ?? 0
@@ -574,16 +563,20 @@ export class PJTabBarController {
     this.weakMap.get(this.key)?.insert(atIndex, item)
   }
 
-  delete(atIndex: number): PJTabBarItemInterface | undefined {
-    return this.weakMap.get(this.key)?.delete(atIndex)
+  delete(atIndex: number): PJTabBarItemInterface | null {
+    let tabBar = this.weakMap.get(this.key)
+    if (tabBar) {
+      return tabBar.delete(atIndex)
+    }
+    return null
   }
 
-  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): number {
-    return this.weakMap.get(this.key)?.findIndex(predicate) ?? -1
+  findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
+    return this.weakMap.get(this.key)?.findIndex(predicate, thisArg) ?? -1
   }
 
-  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => unknown, thisArg?: any): PJTabBarItemInterface | undefined {
-    return this.weakMap.get(this.key)?.find(predicate)
+  find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface | undefined {
+    return this.weakMap.get(this.key)?.find(predicate, thisArg)
   }
 
   getItem(atIndex: number): PJTabBarItemInterface | undefined {

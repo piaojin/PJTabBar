@@ -15,4 +15,7 @@
 
 export class PJTabBarItemAttribute {
   area: Area
+  constructor(area: Area) {
+    this.area = area
+  }
 }
