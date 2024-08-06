@@ -18,16 +18,7 @@ struct CustomItemPage {
   }
 
   @Builder titleBuilder() {
-    Row() {
-      Image($r('app.media.back'))
-        .width(30)
-        .height(30)
-        .onClick(() => {
-          router.back()
-        })
-
-      Text('Custom Item Page')
-    }
+    Text('Custom Item Page')
     .padding({left: 20, top: 20})
   }
 
@@ -72,6 +63,7 @@ struct CustomItemPage {
       }
       .title(this.titleBuilder())
       .mode(NavigationMode.Stack)
+      .titleMode(NavigationTitleMode.Mini)
     }
   }
 }

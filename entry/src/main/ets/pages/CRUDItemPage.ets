@@ -21,16 +21,7 @@ struct CRUDItemPage {
   }
 
   @Builder titleBuilder() {
-    Row() {
-      Image($r('app.media.back'))
-        .width(30)
-        .height(30)
-        .onClick(() => {
-          router.back()
-        })
-
-      Text('CRUD Item Page')
-    }
+    Text('CRUD Item Page')
     .padding({ left: 20, top: 20 })
   }
 
@@ -78,6 +69,7 @@ struct CRUDItemPage {
       }
       .title(this.titleBuilder())
       .mode(NavigationMode.Stack)
+      .titleMode(NavigationTitleMode.Mini)
     }
   }
 }

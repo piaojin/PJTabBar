@@ -51,16 +51,7 @@ struct CustomIndicatorPage {
   }
 
   @Builder titleBuilder() {
-    Row() {
-      Image($r('app.media.back'))
-        .width(30)
-        .height(30)
-        .onClick(() => {
-          router.back()
-        })
-
-      Text('Custom Indicator Page')
-    }
+    Text('Custom Indicator Page')
     .padding({left: 20, top: 20})
   }
 
@@ -160,6 +151,7 @@ struct CustomIndicatorPage {
       }
         .title(this.titleBuilder())
       .mode(NavigationMode.Stack)
+      .titleMode(NavigationTitleMode.Mini)
     }
   }
 }

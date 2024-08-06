@@ -145,7 +145,7 @@ PJTabComponent({
 
 在下述版本验证通过：
 
-- DevEco Studio: NEXT Developer Beta1, SDK: API12(5.0.0)
+- DevEco Studio: NEXT Developer Beta2(Build Version: 5.0.3.502), SDK: API12(5.0.0)
 
 ## 目录结构
 
@@ -177,9 +177,3 @@ PJTabComponent({
 ## 参考的ReadMe写法
 
 [CircleIndicator README.md](https://gitee.com/openharmony-sig/CircleIndicator/blob/master/README.md)
-
-
-## 下个版本计划
-
-* 由于本人没有Next开发权限，故还没适配OpenHarmony SDK:API12， 将来计划适配。 
-* 指示器跟随TabContent的滑动而联动。

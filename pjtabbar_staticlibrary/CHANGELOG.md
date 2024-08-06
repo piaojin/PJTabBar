@@ -1,19 +1,23 @@
+## v1.0.3 [2024.08.06]
+1. 加快指示器与Change Page之间的联动。
+2. 修复DevEco Studio: NEXT Developer Beta2, Preview模式下, 无法预览PJTabComponent问题。
+
 ## v1.0.2 [2024.07.17]
-1. 适配API12
-2. 修复TabContent底部超出大概42vp屏幕问题
-3. 修复简介Demo gif加载不出来问题
+1. 适配API12。
+2. 修复TabContent底部超出大概42vp屏幕问题。
+3. 修复简介Demo gif加载不出来问题。
 4. 版本v1.0.0中的bug iii,iv验证在API12下已被系统修复，并删除相应Workaround修复方法。
 
 ## v1.0.1 [2024.07.09]
-1. 修复PJComponent index默认值为4问题
-2. 修复简介Demo gif加载不出来问题
+1. 修复PJComponent index默认值为4问题。
+2. 修复简介Demo gif加载不出来问题。
 
 ## v1.0.0 [2024.07.05]
 
 - 已实现功能
-    1. 支持自定义指示器，TabBar Item, TabBar 左右附加视图
-    2. 支持TabBar Item居左居中居右布局
-    3. 支持更新，插入，删除TabBar Item
+    1. 支持自定义指示器，TabBar Item, TabBar 左右附加视图。
+    2. 支持TabBar Item居左居中居右布局。
+    3. 支持更新，插入，删除TabBar Item。
 
 - 未支持功能
     1. 由于本人没有Next开发权限，故还没适配OpenHarmony SDK:API12， 将来计划适配。

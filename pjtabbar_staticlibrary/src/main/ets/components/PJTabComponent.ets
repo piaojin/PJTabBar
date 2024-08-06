@@ -27,6 +27,8 @@ export struct PJTabComponent {
   @State index: number = 0
   @State items: PJTabBarItemInterface[] = []
   @State tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
+  // 默认选中的index
+  private _defaultIndex: number = 0
   controller?: PJTabComponentController | null
 
   // 点击了item
@@ -41,11 +43,14 @@ export struct PJTabComponent {
   builder: PJBuilder = new PJBuilder()
 
   // 自定义page内容视图
-  @Require @BuilderParam contentBuilder: (item: PJTabBarItemInterface, index: number) => void
+  @Require @BuilderParam contentBuilder: (item: PJTabBarItemInterface, index: number) => void = this.nullBuilder
+
+  @Builder private nullBuilder() {}
 
   aboutToAppear() {
     if (!this.hasInit) {
       this.hasInit = true
+      this._defaultIndex = this.index
       if (this.controller) {
         this.controller.bind(this)
       }
@@ -107,7 +112,8 @@ export struct PJTabComponent {
           }
         }})
 
-      Tabs({controller: this.tabsController, index: this.index}) {
+      // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然.
+      Tabs({controller: this.tabsController, index: this._defaultIndex}) {
         ForEach(this.items, (item: PJTabBarItemInterface, index) => {
           TabContent() {
             this.contentBuilder(item, index)
@@ -122,12 +128,13 @@ export struct PJTabComponent {
       }
       .barHeight(0)
       .onChange((index: number) => {
-        if (this.index !== index) {
-          this.tabBarController.selectItemAtIndex(index)
-        }
-
         if (this.onChangePage) {
           this.onChangePage(this.items[index], index)
+        }
+      })
+      .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
+        if (this.index !== targetIndex) {
+          this.tabBarController.selectItemAtIndex(targetIndex)
         }
       })
     }

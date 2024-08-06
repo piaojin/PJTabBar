@@ -60,7 +60,7 @@ export struct PJTabBar {
   // 右边附加视图
   @BuilderParam private rightItemBuilder: () => void = this.nullBuilder
 
-  @Builder nullBuilder() {}
+  @Builder private nullBuilder() {}
 
   // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
   private moveStartX: number = 0
