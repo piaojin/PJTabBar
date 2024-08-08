@@ -1,3 +1,7 @@
+## v1.0.4 [2024.08.08]
+1. 添加replace接口，用于替换当前items。
+2. PJTabComponentController与PJTabBarController接口添加注释。
+
 ## v1.0.3 [2024.08.06]
 1. 加快指示器与Change Page之间的联动。
 2. 修复DevEco Studio: NEXT Developer Beta2, Preview模式下, 无法预览PJTabComponent问题。
