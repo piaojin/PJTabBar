@@ -327,6 +327,14 @@ export struct PJTabBar {
     return deletedItems.length > 0 ? deletedItems[0] : null
   }
 
+  replace(withItems: PJTabBarItemInterface[], selectIndex: number = this.index) {
+    this.items = withItems
+    let defaultIndex = selectIndex < this.items.length ? Math.max(selectIndex, 0) : 0
+    this.delay(200, () => {
+      this.selectItemAtIndex(defaultIndex)
+    })
+  }
+
   findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
     return this.items.findIndex(predicate, thisArg)
   }
@@ -537,32 +545,60 @@ export class PJTabBarController {
   private weakMap = new WeakMap<object, PJTabBar>()
   private key: PJTabBarControllerKey = {}
 
+  /**
+   * Return the current selected item index.
+   */
   currentIndex(): number {
     return this.weakMap.get(this.key)?.index ?? 0
   }
 
+  /**
+   * Select the item at index. And will also scroll the indicator to the selected item.
+   * @param index The new selected item index.
+   */
   selectItemAtIndex(index: number) {
     this.weakMap.get(this.key)?.selectItemAtIndex(index)
   }
 
+  /**
+   * TODO: Linkage indicator and page.
+   */
   onTouchPage(event: TouchEvent, currentIndex: number) {
     this.weakMap.get(this.key)?.onTouchPage(event, currentIndex)
   }
 
+  /**
+   * Bind the `PJTabBar` as delegate.
+   * @param tabBar Used to bind with PJTabBarController as delegate.
+   */
   bind(tabBar: PJTabBar) {
     this.weakMap.set(this.key, tabBar)
   }
 
   /// CRUD Actions
 
+  /**
+   * Update the item with `item` at `atIndex`.
+   * @param atIndex Index of the item to be updated.
+   * @param item The new item used to update the current item at `atIndex`.
+   */
   update(index: number, item: PJTabBarItemInterface) {
     this.weakMap.get(this.key)?.update(index, item)
   }
 
+  /**
+   * Insert the new item at `atIndex`.
+   * @param atIndex Index of the new item to be inserted.
+   * @param item The new item used to insert at `atIndex`.
+   */
   insert(atIndex: number, item: PJTabBarItemInterface) {
     this.weakMap.get(this.key)?.insert(atIndex, item)
   }
 
+  /**
+   * Delete the item at `atIndex`.
+   * @param atIndex Delete the item at `atIndex` and return the deleted item. And return null if the `atIndex` is out of range.
+   */
   delete(atIndex: number): PJTabBarItemInterface | null {
     let tabBar = this.weakMap.get(this.key)
     if (tabBar) {
@@ -571,14 +607,46 @@ export class PJTabBarController {
     return null
   }
 
+  /**
+   * Replace current items with `withItems` and select item at `selectIndex`.
+   * @param withItems Used to replace current items.
+   * @param selectIndex If provided, will select the item at `selectIndex`. If it is not provided, the current index is used instead.
+   */
+  replace(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
+    this.weakMap.get(this.key)?.replace(withItems, selectIndex)
+  }
+
+  /**
+   * Returns the index of the first element in the array where predicate is true, and -1
+   * otherwise.
+   * @param predicate find calls predicate once for each element of the array, in ascending
+   * order, until it finds one where predicate returns true. If such an element is found,
+   * findIndex immediately returns that element index. Otherwise, findIndex returns -1.
+   * @param thisArg If provided, it will be used as the this value for each invocation of
+   * predicate. If it is not provided, undefined is used instead.
+   */
   findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
     return this.weakMap.get(this.key)?.findIndex(predicate, thisArg) ?? -1
   }
 
+  /**
+   * Returns the value of the first element in the array where predicate is true, and undefined
+   * otherwise.
+   * @param predicate find calls predicate once for each element of the array, in ascending
+   * order, until it finds one where predicate returns true. If such an element is found, find
+   * immediately returns that element value. Otherwise, find returns undefined.
+   * @param thisArg If provided, it will be used as the this value for each invocation of
+   * predicate. If it is not provided, undefined is used instead.
+   */
   find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface | undefined {
     return this.weakMap.get(this.key)?.find(predicate, thisArg)
   }
 
+  /**
+   * Returns the value of the atIndex in the array where predicate is true, and undefined
+   * otherwise.
+   * @param atIndex Index of the element in the array.
+   */
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
     return this.weakMap.get(this.key)?.getItem(atIndex)
   }
