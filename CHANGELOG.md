@@ -1,3 +1,10 @@
+## v1.0.5 [2024.08.13]
+1. 修复CRUD操作后item的index没有更新，导致tabbarUI状态错乱。
+2. 修复CRUD操作后tabs content没更新。
+3. 改善指示器滚动过程中抖动问题。
+4. 添加在TabBar末尾新增元素接口: push。
+5. 替换attrs数组为Map。
+
 ## v1.0.4 [2024.08.08]
 1. 添加setItems接口，用于替换当前items。
 2. PJTabComponentController与PJTabBarController接口添加注释。
