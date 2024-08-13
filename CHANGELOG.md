@@ -1,5 +1,5 @@
 ## v1.0.4 [2024.08.08]
-1. 添加replace接口，用于替换当前items。
+1. 添加setItems接口，用于替换当前items。
 2. PJTabComponentController与PJTabBarController接口添加注释。
 
 ## v1.0.3 [2024.08.06]

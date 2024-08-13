@@ -9,6 +9,7 @@ struct CRUDItemPage {
   ]
   private options: PJTabBarOptionsInterface = new PJTabBarOptions()
   private controller: PJTabComponentController = new PJTabComponentController()
+  private crudIndex: number = 0
 
   aboutToAppear() {
     this.options.indicatorWidth = 30
@@ -52,11 +53,14 @@ struct CRUDItemPage {
             Button('Update')
               .onClick(() => {
                 this.controller.update(2, new PJTabBarItem("更新龙眼"))
+                // this.controller.setItems([new PJTabBarItem('红烧猪蹄1'), new PJTabBarItem('猫山王榴莲1'), new PJTabBarItem('龙眼1'), new PJTabBarItem('释迦果1')
+                // ])
               })
 
             Button('Insert')
               .onClick(() => {
                 this.controller.insert(3, new PJTabBarItem("菠萝蜜🥭"))
+                this.crudIndex += 1
               })
 
             Button('Delete')

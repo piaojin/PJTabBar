@@ -13,18 +13,20 @@
  * limitations under the License.
  */
 
+/// id与index由TabBar内部赋值，无需外部传入值。
 export interface PJTabBarItemInterface {
-  title: string
+  id: string
   index: number
+  title: string
 }
 
 @Observed
 export class PJTabBarItem implements PJTabBarItemInterface {
+  id: string = ''
   index: number = 0
   title: string
 
-  constructor(title: string, index: number = 0) {
+  constructor(title: string) {
     this.title = title
-    this.index = index
   }
 }

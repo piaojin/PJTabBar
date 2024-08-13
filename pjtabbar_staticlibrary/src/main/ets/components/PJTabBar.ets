@@ -14,6 +14,7 @@
  */
 
 import display from '@ohos.display'
+import util from '@ohos.util'
 import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '../models/PJTabBarOptions'
 import {PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
@@ -33,7 +34,7 @@ export struct PJTabBar {
   // 第一次设置的index, 用于计算indicatorOffsetX
   private defaultIndex: number = 0
   @Link index: number
-  @Link @Watch('updateItems') items: PJTabBarItemInterface[]
+  @Link items: PJTabBarItemInterface[]
   // tabbar配置
   @Link tabBarOptions: PJTabBarOptionsInterface
   controller?: PJTabBarController | null
@@ -88,7 +89,7 @@ export struct PJTabBar {
     this.defaultIndex = this.index
 
     // 初始化item的index
-    this.updateItems()
+    this.updateItems(0, true)
 
     if (this.controller) {
       this.controller.bind(this)
@@ -99,9 +100,12 @@ export struct PJTabBar {
     }
   }
 
-  private updateItems() {
-    for(let index = 0; index < this.items.length; index++) {
+  private updateItems(fromIndex: number = 0, shouldResetId: boolean = false) {
+    for(let index = fromIndex; index < this.items.length; index++) {
       this.items[index].index = index
+      if (shouldResetId) {
+        this.items[index].id = util.generateRandomUUID(false)
+      }
     }
   }
 
@@ -179,8 +183,8 @@ export struct PJTabBar {
     this.scrollIndicatorToIndex(this.index)
   }
 
-  private isSelectedItem(item: PJTabBarItemInterface): boolean {
-    return this.index === item.index
+  private isSelectedItem(atIndex: number): boolean {
+    return this.index === atIndex
   }
 
   private getItemCenterX(index: number): number | null {
@@ -292,10 +296,19 @@ export struct PJTabBar {
   }
 
   insert(atIndex: number, item: PJTabBarItemInterface) {
-    if (atIndex <= this.index) {
+    let fixedIndex = Math.min(Math.max(atIndex, 0), this.items.length)
+    if (fixedIndex <= this.index) {
       this.index += 1
     }
-    this.items.splice(atIndex, 0, item)
+    this.items.splice(fixedIndex, 0, item)
+
+    // 更新局部item.index值
+    this.updateItems(fixedIndex)
+
+    if (fixedIndex <= this.index) {
+      this.selectItemAtIndex(this.index)
+    }
+
     this.delay(200, () => {
       this.scrollIndicatorToIndex(this.index)
     })
@@ -315,6 +328,7 @@ export struct PJTabBar {
     }
 
     let deletedItems = this.items.splice(atIndex, 1)
+    this.updateItems(atIndex)
     this.delay(200, () => {
       this.scrollIndicatorToIndex(this.index)
       if (hasChangeIndex) {
@@ -327,8 +341,9 @@ export struct PJTabBar {
     return deletedItems.length > 0 ? deletedItems[0] : null
   }
 
-  replace(withItems: PJTabBarItemInterface[], selectIndex: number = this.index) {
+  setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.index) {
     this.items = withItems
+    this.updateItems(0, true)
     let defaultIndex = selectIndex < this.items.length ? Math.max(selectIndex, 0) : 0
     this.delay(200, () => {
       this.selectItemAtIndex(defaultIndex)
@@ -348,6 +363,12 @@ export struct PJTabBar {
       return this.items[atIndex]
     }
     return undefined
+  }
+
+  private identifier(index: number): string {
+    let item = this.items[index]
+    let idstr = item.id + '_' + item.index.toString() + '_' + item.title
+    return idstr
   }
 
   @Styles private indicatorStyles() {
@@ -436,9 +457,9 @@ export struct PJTabBar {
       this.customerItemBuilder(item, this.tabBarOptions, index)
     } else {
       Text(item.title)
-        .ItemTextCommonExtend(this.isSelectedItem(item), this.tabBarOptions)
-        .backgroundColor(this.isSelectedItem(item) ? this.tabBarOptions.selectedItemBackgroundColor : this.tabBarOptions.itemBackgroundColor)
-        .border(this.isSelectedItem(item) ? this.tabBarOptions.selectedItemBorder : this.tabBarOptions.itemBorder)
+        .ItemTextCommonExtend(this.isSelectedItem(index), this.tabBarOptions)
+        .backgroundColor(this.isSelectedItem(index) ? this.tabBarOptions.selectedItemBackgroundColor : this.tabBarOptions.itemBackgroundColor)
+        .border(this.isSelectedItem(index) ? this.tabBarOptions.selectedItemBorder : this.tabBarOptions.itemBorder)
         .margin(this.tabBarOptions.itemMargin)
         .maxLines(this.tabBarOptions.maxLines)
         .width(this.tabBarOptions.itemWidth)
@@ -472,7 +493,7 @@ export struct PJTabBar {
 
           ForEach(this.items, (item: PJTabBarItemInterface, index) => {
             this.itemBuilder(item, index)
-          }, (item: PJTabBarItemInterface) => item.index.toString() + '_' + item.title)
+          }, (item: PJTabBarItemInterface, index: number) => this.identifier(index))
 
           // 右侧附加视图
           if (this.rightItemBuilder !== this.nullBuilder && !this.tabBarOptions.isRightItemFixed) {
@@ -612,8 +633,8 @@ export class PJTabBarController {
    * @param withItems Used to replace current items.
    * @param selectIndex If provided, will select the item at `selectIndex`. If it is not provided, the current index is used instead.
    */
-  replace(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
-    this.weakMap.get(this.key)?.replace(withItems, selectIndex)
+  setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
+    this.weakMap.get(this.key)?.setItems(withItems, selectIndex)
   }
 
   /**

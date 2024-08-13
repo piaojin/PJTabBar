@@ -70,18 +70,31 @@ export struct PJTabComponent {
 
   update(index: number, item: PJTabBarItemInterface) {
     this.tabBarController.update(index, item)
+    this.delay(100, () => {
+      this.tabsController.changeIndex(this.index)
+    })
   }
 
   insert(atIndex: number, item: PJTabBarItemInterface) {
     this.tabBarController.insert(atIndex, item)
+    this.delay(100, () => {
+      this.tabsController.changeIndex(this.index)
+    })
   }
 
   delete(atIndex: number): PJTabBarItemInterface | null {
-    return this.tabBarController.delete(atIndex)
+    let deletedItem = this.tabBarController.delete(atIndex)
+    this.delay(100, () => {
+      this.tabsController.changeIndex(this.index)
+    })
+    return deletedItem
   }
 
-  replace(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
-    this.tabBarController.replace(withItems, selectIndex)
+  setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
+    this.tabBarController.setItems(withItems, selectIndex)
+    this.delay(100, () => {
+      this.tabsController.changeIndex(this.index)
+    })
   }
 
   findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
@@ -94,6 +107,23 @@ export struct PJTabComponent {
 
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
     return this.tabBarController.getItem(atIndex)
+  }
+
+  private identifier(index: number): string {
+    let item = this.items[index]
+    let idstr = item.id + '_' + item.index.toString() + '_' + item.title
+    return idstr
+  }
+
+  private delay(duration: number, handler: () => void) {
+    new Promise<void>((resolve, _) => {
+      setTimeout(() => {
+        resolve()
+      }, duration)
+    })
+      .then(() => {
+        handler()
+      })
   }
 
   build() {
@@ -128,7 +158,7 @@ export struct PJTabComponent {
           // .onTouch((event) => {
           //   this.tabBarController.onTouchPage(event, this.index)
           // })
-        })
+        }, (item: PJTabBarItemInterface, index: number) => this.identifier(index))
       }
       .barHeight(0)
       .onChange((index: number) => {
@@ -212,8 +242,8 @@ export class PJTabComponentController {
    * @param withItems Used to replace current items.
    * @param selectIndex If provided, will select the item at `selectIndex`. If it is not provided, the current index is used instead.
    */
-  replace(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
-    this.weakMap.get(this.key)?.replace(withItems, selectIndex)
+  setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
+    this.weakMap.get(this.key)?.setItems(withItems, selectIndex)
   }
 
   /**
