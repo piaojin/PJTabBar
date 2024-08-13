@@ -43,7 +43,7 @@ export interface PJTabBarOptionsInterface {
   indicatorMargin?: Margin
   indicatorColor?: ResourceColor
   indicatorPosition?: PJIndicatorPosition
-  scrollStyle?: PJScrollStyle
+  indicatorAnimationType?: PJIndicatorAnimationType
   isSameWidthWithItem?: boolean
   isSameHeightWithItem?: boolean
   indicatorAnimationDuration?: number
@@ -64,6 +64,8 @@ export interface PJTabBarOptionsInterface {
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean
   // 使item尽量滚到中间位置
   optimizeOffsetX?: number
+  // 是否开启懒加载页面
+  enableLazyLoad: boolean
 }
 
 @Observed
@@ -97,7 +99,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   indicatorColor: ResourceColor = Color.Blue
   indicatorAnimationDuration: number = 300
   indicatorPosition: PJIndicatorPosition = PJIndicatorPosition.Bottom
-  scrollStyle: PJScrollStyle = PJScrollStyle.Normal
+  indicatorAnimationType: PJIndicatorAnimationType = PJIndicatorAnimationType.Linear
   isSameWidthWithItem: boolean = false
   isSameHeightWithItem: boolean = false
   isHideIndicator: boolean = false
@@ -116,12 +118,15 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean = true
   // 使item尽量滚到中间位置
   optimizeOffsetX: number = 120
+  enableLazyLoad: boolean = false
 }
 
+/// 指示器位置（上，中，下）
 export enum PJIndicatorPosition {
   Top, Center, Bottom
 }
 
-export enum PJScrollStyle {
-  Normal
+/// 指示器滚动动画
+export enum PJIndicatorAnimationType {
+  Linear
 }
