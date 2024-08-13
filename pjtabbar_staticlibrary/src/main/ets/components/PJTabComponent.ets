@@ -17,6 +17,7 @@ import {PJTabBarOptionsInterface, PJTabBarOptions} from '../models/PJTabBarOptio
 import {PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBar, PJTabBarController} from './PJTabBar'
 import {PJBuilder} from '../models/PJBuilder'
+import { PJTabDataSource } from '../models/PJTabDataSource'
 
 @Component
 export struct PJTabComponent {
@@ -26,6 +27,7 @@ export struct PJTabComponent {
 
   @State index: number = 0
   @State items: PJTabBarItemInterface[] = []
+  private dataSource: PJTabDataSource = new PJTabDataSource()
   @State tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
   // 默认选中的index
   private _defaultIndex: number = 0
@@ -49,6 +51,8 @@ export struct PJTabComponent {
 
   aboutToAppear() {
     if (!this.hasInit) {
+      // 绑定TabBar数据源
+      this.dataSource.setItems(this.items)
       this.hasInit = true
       this._defaultIndex = this.index
       if (this.controller) {
@@ -117,12 +121,6 @@ export struct PJTabComponent {
     return this.tabBarController.getItem(atIndex)
   }
 
-  private identifier(index: number): string {
-    let item = this.items[index]
-    let idstr = item.id + '_' + item.index.toString() + '_' + item.title
-    return idstr
-  }
-
   private delay(duration: number, handler: () => void) {
     new Promise<void>((resolve, _) => {
       setTimeout(() => {
@@ -166,12 +164,15 @@ export struct PJTabComponent {
           // .onTouch((event) => {
           //   this.tabBarController.onTouchPage(event, this.index)
           // })
-        }, (item: PJTabBarItemInterface, index: number) => this.identifier(index))
+        }, (item: PJTabBarItemInterface, index: number) => this.dataSource.identifier(index))
       }
       .barHeight(0)
       .onChange((index: number) => {
         if (this.onChangePage) {
-          this.onChangePage(this.items[index], index)
+          let item = this.getItem(index)
+          if (item) {
+            this.onChangePage(item, index)
+          }
         }
       })
       .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
