@@ -75,6 +75,14 @@ export struct PJTabComponent {
     })
   }
 
+  push(...items: PJTabBarItemInterface[]): number {
+    let newLength = this.tabBarController.push(...items)
+    this.delay(100, () => {
+      this.tabsController.changeIndex(this.index)
+    })
+    return newLength
+  }
+
   insert(atIndex: number, item: PJTabBarItemInterface) {
     this.tabBarController.insert(atIndex, item)
     this.delay(100, () => {
@@ -214,6 +222,14 @@ export class PJTabComponentController {
    */
   update(index: number, item: PJTabBarItemInterface) {
     this.weakMap.get(this.key)?.update(index, item)
+  }
+
+  /**
+   * Appends new elements to the end of an array, and returns the new length of the array.
+   * @param items New elements to add to the array.
+   */
+  push(...items: PJTabBarItemInterface[]): number {
+    return this.weakMap.get(this.key)?.push(...items) ?? -1
   }
 
   /**

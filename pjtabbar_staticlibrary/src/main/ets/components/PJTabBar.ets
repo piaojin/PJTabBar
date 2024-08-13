@@ -19,6 +19,7 @@ import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '..
 import {PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
 import {PJBuilder} from '../models/PJBuilder'
+import { JSON } from '@kit.ArkTS'
 
 @Extend(Text) function ItemTextCommonExtend(isSelected: boolean, options: PJTabBarOptionsInterface) {
   .fontSize(isSelected ? options.selectedFontSize : options.fontSize)
@@ -42,7 +43,7 @@ export struct PJTabBar {
   // indicator移动的距离, 即移动到选中的item的centerX下
   @State private indicatorOffsetX: number = 0
   // item坐标数据
-  private attrs: PJTabBarItemAttribute[] = []
+  private attrs: Map<number, PJTabBarItemAttribute> = new Map<number, PJTabBarItemAttribute>()
   private hasInitData: boolean = false
   private hasInitTabPos: boolean = false
   @State private scrollHeight: number = 0
@@ -128,15 +129,15 @@ export struct PJTabBar {
   }
 
   private updateItemAttribute(index: number, attr: PJTabBarItemAttribute) {
-    this.attrs[index] = attr
+    this.attrs.set(index, attr)
   }
 
   /// 滚动indicator到新选中的item位置
   private scrollIndicatorToIndex(newIndex: number) {
-    if (newIndex < this.attrs.length) {
-      let oldArea = this.attrs[this.defaultIndex]
-      let newArea = this.attrs[newIndex]
-      if (newArea) {
+    if (newIndex < this.attrs.size) {
+      let oldArea = this.attrs.get(this.defaultIndex)
+      let newArea = this.attrs.get(newIndex)
+      if (newArea && oldArea) {
         let newIndicatorOffseX: number = 0
         if (newIndex === this.defaultIndex) {
           newIndicatorOffseX = 0
@@ -153,11 +154,13 @@ export struct PJTabBar {
           if (this.tabBarOptions.isSameWidthWithItem) {
             // 更新indicatorWidth
             animateTo({duration: this.tabBarOptions.indicatorAnimationDuration, curve: Curve.Linear}, () => {
-              this.tabBarOptions.indicatorWidth = newArea.area.width as number
+              if (newArea) {
+                this.tabBarOptions.indicatorWidth = newArea.area.width as number
+              }
             })
           }
 
-          if (this.tabBarOptions.isSameHeightWithItem && this.tabBarOptions.indicatorHeight !== (newArea.area.height as number)) {
+          if (this.tabBarOptions.isSameHeightWithItem && newArea && this.tabBarOptions.indicatorHeight !== (newArea.area.height as number)) {
             this.tabBarOptions.indicatorHeight = newArea.area.height as number
           }
         })
@@ -167,8 +170,8 @@ export struct PJTabBar {
 
   /// 滚动item到指定index
   private scrollItemToIndex(index: number) {
-    if (index < this.attrs.length) {
-      let attr = this.attrs[index]
+    if (index < this.attrs.size) {
+      let attr = this.attrs.get(index)
       if (attr) {
         let optimizeOffsetX = this.tabBarOptions.optimizeOffsetX ?? 0
         // 使item尽量滚到中间位置
@@ -179,8 +182,11 @@ export struct PJTabBar {
 
   selectItemAtIndex(index: number) {
     this.index = index
-    this.scrollItemToIndex(index)
     this.scrollIndicatorToIndex(this.index)
+    // 改善指示器滚动过程中抖动问题
+    this.delay(150, () => {
+      this.scrollItemToIndex(index)
+    })
   }
 
   private isSelectedItem(atIndex: number): boolean {
@@ -188,23 +194,29 @@ export struct PJTabBar {
   }
 
   private getItemCenterX(index: number): number | null {
-    if (index >= this.attrs.length) {
+    if (index >= this.attrs.size) {
       return null
     }
 
-    let targetArea = this.attrs[index]
-    let newItemX = (targetArea.area.position.x ?? 0) as number
-    let newItemCenterX = newItemX + (targetArea.area.width as number) / 2
-    return newItemCenterX
+    let targetArea = this.attrs.get(index)
+    if (targetArea) {
+      let newItemX = (targetArea.area.position.x ?? 0) as number
+      let newItemCenterX = newItemX + (targetArea.area.width as number) / 2
+      return newItemCenterX
+    }
+    return null
   }
 
   private getItemWidth(index: number): number | null {
-    if (index >= this.attrs.length) {
+    if (index >= this.attrs.size) {
       return null
     }
 
-    let targetArea = this.attrs[index]
-    return targetArea.area.width as number
+    let targetArea = this.attrs.get(index)
+    if (targetArea) {
+      return targetArea.area.width as number
+    }
+    return null
   }
 
   private delay(duration: number, handler: () => void) {
@@ -293,6 +305,13 @@ export struct PJTabBar {
 
   update(index: number, item: PJTabBarItemInterface) {
     this.items[index] = item
+  }
+
+  push(...items: PJTabBarItemInterface[]): number {
+    let oldLength = this.items.length
+    let newLength = this.items.push(...items)
+    this.updateItems(oldLength, true)
+    return newLength
   }
 
   insert(atIndex: number, item: PJTabBarItemInterface) {
@@ -545,7 +564,7 @@ export struct PJTabBar {
 
     if (oldArea.width !== newArea.width) {
       if (this.tabBarOptions.shouldScrollToCurrentIndexWhenTabBarWidthChanged) {
-        let selectedIndexArea = this.attrs[this.index]
+        let selectedIndexArea = this.attrs.get(this.index)
         // 如果当前选中的item已经可见则不需要滚动item的位置
         if (selectedIndexArea) {
           let x = selectedIndexArea.area.position.x
@@ -605,6 +624,14 @@ export class PJTabBarController {
    */
   update(index: number, item: PJTabBarItemInterface) {
     this.weakMap.get(this.key)?.update(index, item)
+  }
+
+  /**
+   * Appends new elements to the end of an array, and returns the new length of the array.
+   * @param items New elements to add to the array.
+   */
+  push(...items: PJTabBarItemInterface[]): number {
+    return this.weakMap.get(this.key)?.push(...items) ?? -1
   }
 
   /**
