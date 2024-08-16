@@ -14,9 +14,9 @@
  */
 
 import {PJTabBarOptionsInterface, PJTabBarOptions} from '../models/PJTabBarOptions'
-import {PJTabBarItemInterface} from '../models/PJTabBarItem'
+import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBar, PJTabBarController} from './PJTabBar'
-import {PJBuilder} from '../models/PJBuilder'
+import {PJBuilder, PJNullBuilder} from '../models/PJBuilder'
 import { PJTabDataSource } from '../models/PJTabDataSource'
 
 @Component
@@ -28,9 +28,9 @@ export struct PJTabComponent {
   @State index: number = 0
   @State items: PJTabBarItemInterface[] = []
   private dataSource: PJTabDataSource = new PJTabDataSource()
+  @State private hasBindDataSource: boolean = false
   @State tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
-  // 默认选中的index
-  private _defaultIndex: number = 0
+  @State private tabsIndex: number = 0
   controller?: PJTabComponentController | null
 
   // 点击了item
@@ -45,16 +45,12 @@ export struct PJTabComponent {
   builder: PJBuilder = new PJBuilder()
 
   // 自定义page内容视图
-  @Require @BuilderParam contentBuilder: (item: PJTabBarItemInterface, index: number) => void = this.nullBuilder
-
-  @Builder private nullBuilder() {}
+  @Require @BuilderParam contentBuilder: ($$: PJReferenceTabBarItemInterface) => void = PJNullBuilder
 
   aboutToAppear() {
     if (!this.hasInit) {
-      // 绑定TabBar数据源
-      this.dataSource.setItems(this.items)
       this.hasInit = true
-      this._defaultIndex = this.index
+      this.tabsIndex = this.index.valueOf()
       if (this.controller) {
         this.controller.bind(this)
       }
@@ -70,42 +66,49 @@ export struct PJTabComponent {
     this.tabsController.changeIndex(index)
   }
 
+  private bindDataSource() {
+    let dataSource = this.tabBarController.dataSource()
+    if (dataSource) {
+      this.dataSource = dataSource
+      this.hasBindDataSource = true
+    }
+  }
+
   /// CRUD Actions
 
   update(index: number, item: PJTabBarItemInterface) {
     this.tabBarController.update(index, item)
-    this.delay(100, () => {
-      this.tabsController.changeIndex(this.index)
-    })
   }
 
   push(...items: PJTabBarItemInterface[]): number {
-    let newLength = this.tabBarController.push(...items)
-    this.delay(100, () => {
-      this.tabsController.changeIndex(this.index)
-    })
-    return newLength
+    return this.tabBarController.push(...items)
   }
 
   insert(atIndex: number, item: PJTabBarItemInterface) {
+    let fixedIndex = Math.min(Math.max(atIndex, 0), this.dataSource.totalCount())
+    if (fixedIndex <= this.index) {
+      this.tabsIndex = this.index + 1
+    }
     this.tabBarController.insert(atIndex, item)
-    this.delay(100, () => {
-      this.tabsController.changeIndex(this.index)
-    })
   }
 
   delete(atIndex: number): PJTabBarItemInterface | null {
-    let deletedItem = this.tabBarController.delete(atIndex)
-    this.delay(100, () => {
-      this.tabsController.changeIndex(this.index)
-    })
-    return deletedItem
+    if (atIndex < this.dataSource.totalCount() && atIndex >= 0) {
+      if (atIndex < this.index) {
+        this.tabsIndex = this.index - 1
+      } else if (atIndex === this.index) { // 如果删除的是当前选中的item,则默认重新选中第一个item。
+        this.tabsIndex = 0
+      }
+    }
+    return this.tabBarController.delete(atIndex)
   }
 
   setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex()) {
+    let defaultIndex = selectIndex < withItems.length ? Math.max(selectIndex, 0) : 0
+    this.tabsIndex = defaultIndex
     this.tabBarController.setItems(withItems, selectIndex)
     this.delay(100, () => {
-      this.tabsController.changeIndex(this.index)
+      this.tabsController.changeIndex(defaultIndex)
     })
   }
 
@@ -150,36 +153,46 @@ export struct PJTabComponent {
           if (this.onScrollEdge) {
             this.onScrollEdge(side)
           }
-        }})
+        },
+        onInitData: () => {
+          this.bindDataSource()
+        }
+      })
 
-      // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然.
-      Tabs({controller: this.tabsController, index: this._defaultIndex}) {
-        ForEach(this.items, (item: PJTabBarItemInterface, index) => {
-          TabContent() {
-            this.contentBuilder(item, index)
+      if (this.hasBindDataSource) {
+        // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然. 需要在每次更新this.index时更新this.tabsIndex,否则CRUD操作后会出现Tabs自动选中第一个page的问题。
+        Tabs({controller: this.tabsController, index: this.tabsIndex}) {
+          ForEach(this.items, (item: PJTabBarItemInterface, index: number) => {
+            TabContent() {
+              this.contentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
+            }
+            .align(Alignment.TopStart)
+            .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
+            // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
+            // .onTouch((event) => {
+            //   this.tabBarController.onTouchPage(event, this.index)
+            // })
+          }, (item: PJTabBarItemInterface, index: number) => {
+            return this.dataSource.identifier(index)
+          })
+        }
+        .barHeight(0)
+        .onChange((index: number) => {
+          this.tabsIndex = index
+          if (this.onChangePage) {
+            let item = this.getItem(index)
+            if (item) {
+              this.onChangePage(item, index)
+            }
           }
-          .align(Alignment.TopStart)
-          .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
-          // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
-          // .onTouch((event) => {
-          //   this.tabBarController.onTouchPage(event, this.index)
-          // })
-        }, (item: PJTabBarItemInterface, index: number) => this.dataSource.identifier(index))
+        })
+        .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
+          if (this.index !== targetIndex) {
+            this.tabBarController.selectItemAtIndex(targetIndex)
+          }
+        })
       }
-      .barHeight(0)
-      .onChange((index: number) => {
-        if (this.onChangePage) {
-          let item = this.getItem(index)
-          if (item) {
-            this.onChangePage(item, index)
-          }
-        }
-      })
-      .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
-        if (this.index !== targetIndex) {
-          this.tabBarController.selectItemAtIndex(targetIndex)
-        }
-      })
+
     }
     .alignItems(HorizontalAlign.Start)
     .width('100%')

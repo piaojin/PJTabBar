@@ -75,17 +75,63 @@ PJTabComponent({
 ````
 
 <font face="微软雅黑" size=5 color=#FF0000 >注意:</font>
-```contentBuilder```的传值方式，这种方式下```contentBuilder```中的```this```才是正确的。
+
+#### 1. ```contentBuilder```的传值方式，这种方式下```contentBuilder```中的```this```才是正确的， 通过this才能正确的访问到当前调用者的属性。```customerItemBuilder```, ```customerIndicatorBuilder```, ```leftItemBuilder```和```rightItemBuilder```等Builder类似。
 ````
 PJTabComponent({
    items: this.items,
    tabBarOptions: this.options,
    // 注意contentBuilder的传值方式，这种方式下contentBuilder中的this才是正确的。
-   contentBuilder: (item: PJTabBarItemInterface, index: number) => {
-       this.contentBuilder(item, index)
+   contentBuilder: ($$: PJReferenceTabBarItemInterface) => {
+       this.contentBuilder($$)
    },
+   // 这种调用方式下this不是指向当前的调用者，没法通过this访问当前调用者的属性
+   // contentBuilder: this.contentBuilder
 })
 ````
+
+#### 2. 当```contentBuilder```中的组件用到```PJTabBarItem的title/selectedItemIndex```等属性时，并且希望当调用```controller```的```update```操作后该组件的```title/selectedItemIndex```能跟着更新，那么```contentBuilder```的内容需要封装到一个子组件中，例如```PJContentBuilderWrap```。并且```PJContentBuilderWrap```需要以 
+````
+@State(也可采用@ObjectLink) item: PJTabBarItemInterface = {id: '', index: 0, title: '' }
+currentItemIndex: number = 0
+@Link selectedItemIndex: number
+````
+的形式绑定数据。这么做的原因是当数据源从```PJTabComponent```中通过```@Builder```函数引用传递到调用者的```contentBuilder```时，需要通过```@State/@ObjectLink/@Link```等关键词才能绑定数据源，并且组件的UI才能跟着数据的变化而变化。```customerItemBuilder```, ```customerIndicatorBuilder```, ```leftItemBuilder```和```rightItemBuilder```等Builder类似。
+详细原因可参考官方文档: [@Builder装饰器: 按引用传递参数](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/arkts-builder-0000001524176981-V2#section1522464044212) 与 [管理组件拥有的状态](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/arkts-component-state-management-0000001524417205-V2)
+
+````
+// 子组件
+@Component
+struct PJContentBuilderWrap {
+  @State item: PJTabBarItemInterface = {id: '', index: 0, title: '' }
+  currentItemIndex: number = 0
+  @Link selectedItemIndex: number
+
+  build() {
+    Column() {
+      Text(this.currentItemIndex + ' ' + this.item.title + ', ' + this.selectedItemIndex)
+        .width('100%')
+        .height('100%')
+        .textAlign(TextAlign.Center)
+        .backgroundColor(Color.Green)
+    }
+  }
+}
+
+// 调用者的contentBuilder函数
+@Builder contentBuilder($$: PJReferenceTabBarItemInterface, self: CRUDItemPage) {
+   PJContentBuilderWrap({currentItemIndex: $$.currentItemIndex, selectedItemIndex: $$.selectedItemIndex, item: $$.item})
+
+   // 当content中的组件用到PJTabBarItem的title时，并且不需要随着controller的update操作后该组件的title能跟着更新，那么可以不需要将contentBuilder的内容包装在一个组件中， 如下。
+   // Text($$.currentItemIndex + ' ' + $$.item.title + ', ' + $$.selectedItemIndex)
+   //   .width('100%')
+   //   .height('100%')
+   //   .textAlign(TextAlign.Center)
+   //   .backgroundColor(Color.Green)
+ }
+````
+
+#### 3. 当```contentBuilder```中的组件用到```PJTabBarItem的title/selectedItemIndex```时，并且不需要随着```controller```的```update```操作后该组件的```title/selectedItemIndex```能跟着更新，那么可不需要将```contentBuilde```的内容包装在一个组件中。
 
 更多详细用法请参考开源库sample页面的实现
 
@@ -141,6 +187,34 @@ PJTabComponent({
 | `optimizeOffsetX: number`                         |                                                                                                    item被选中时滚动到item的附加偏移量，目的是让被选中的item尽量滚动到中间位置，默认值120 |
 | `tabBarBorder?: BorderOptions`|                                                                                                          TabBar border配置，默认值null, 可用于配置iOS风格Segment组件 |
 
+## ```PJTabComponentController```接口说明
+| <font face="黑体" size=4>接口名</font>                                                                                                                                   | <font face="黑体" size=4>说明</font> |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------:|
+| `currentIndex(): number`                                                                                                                                            |    返回当前选中的```item```的```index``` |
+| `changeIndex(index: number)`                                                                                                                                        |    控制```PJTabComponent```切换到指定页签 |
+| `update(index: number, item: PJTabBarItemInterface)`                                                                                                                |                更新指定位置的```item``` |
+| `push(...items: PJTabBarItemInterface[]): number`                                                                                                                   |            在TabBar末尾新增```item``` |
+| `insert(atIndex: number, item: PJTabBarItemInterface)`                                                                                                              |                在指定位置插入```item``` |
+| `delete(atIndex: number): PJTabBarItemInterface \| null`                                                                                                            |                 删除指定位置```item``` |
+| `setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex())`                                                                           |                  替换所有的```item``` |
+| `findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number`                         |   根据条件查找相应```item```的```index``` |
+| `find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface \| undefined ` |                  根据条件查找相应的`item` |
+| `getItem(atIndex: number): PJTabBarItemInterface \| undefined`                                                                                                      |                返回`atIndex`处的`item` |
+
+## ```PJTabBarController```接口说明
+| <font face="黑体" size=4>接口名</font>                                                                                                                                   | <font face="黑体" size=4>说明</font> |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------:|
+| `currentIndex(): number`                                                                                                                                            |    返回当前选中的```item```的```index``` |
+| `selectItemAtIndex(index: number)`                                                                                                                                  |       控制```PJTabBar```选中指定`item` |
+| `update(index: number, item: PJTabBarItemInterface)`                                                                                                                |                更新指定位置的```item``` |
+| `push(...items: PJTabBarItemInterface[]): number`                                                                                                                   |            在TabBar末尾新增```item``` |
+| `insert(atIndex: number, item: PJTabBarItemInterface)`                                                                                                              |                在指定位置插入```item``` |
+| `delete(atIndex: number): PJTabBarItemInterface \| null`                                                                                                            |                 删除指定位置```item``` |
+| `setItems(withItems: PJTabBarItemInterface[], selectIndex: number = this.currentIndex())`                                                                           |                  替换所有的```item``` |
+| `findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number`                         |   根据条件查找相应```item```的```index``` |
+| `find(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): PJTabBarItemInterface \| undefined ` |                  根据条件查找相应的`item` |
+| `getItem(atIndex: number): PJTabBarItemInterface \| undefined`                                                                                                      |              返回`atIndex`处的`item` |
+
 ## 约束与限制
 
 在下述版本验证通过：
@@ -159,8 +233,10 @@ PJTabComponent({
 |                             |----components
 |                                   |----PJTabBar.ets #指示器的核心实现
 |                                   |----PJTabComponent.ets #供开发使用，等于Tabs + TabContent
+|                                   |----PJTabBarItemComponent.ets #包装指示器的子组件
                               |----models
 |                                   |----PJTabBarOptions.ets #包含各种配置项
+|                                   |----PJTabDataSource.ets #对数据源的各种操作，比如update, insert, push, delete和setItems等。
 |                                   |----其他.ets #其他model文件
 |           |---- index.ets  # 对外接口
 |     |---- README.md  # 安装使用方法

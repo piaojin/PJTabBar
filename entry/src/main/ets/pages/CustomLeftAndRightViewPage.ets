@@ -1,4 +1,5 @@
-import {PJTabComponent, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions} from '@piaojin/pjtabbar'
+import {PJTabComponent, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions,
+  PJReferenceTabBarItemInterface} from '@piaojin/pjtabbar'
 import router from '@ohos.router'
 
 @Entry
@@ -35,8 +36,8 @@ struct CustomLeftAndRightViewPage {
     .padding({ left: 20, top: 20 })
   }
 
-  @Builder contentBuilder(item: PJTabBarItemInterface, index: number) {
-    Text(index.toString() + ' ' + item.title)
+  @Builder contentBuilder($$: PJReferenceTabBarItemInterface) {
+    Text($$.currentItemIndex.toString() + ' ' + $$.item.title)
       .width('100%')
       .height('100%')
       .textAlign(TextAlign.Center)

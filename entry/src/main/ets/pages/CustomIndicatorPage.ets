@@ -1,4 +1,5 @@
-import {PJTabComponent, PJTabBar, PJIndicatorPosition, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions} from '@piaojin/pjtabbar'
+import {PJTabComponent, PJTabBar, PJIndicatorPosition, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions,
+  PJReferenceTabBarItemInterface} from '@piaojin/pjtabbar'
 import router from '@ohos.router'
 
 @Entry
@@ -55,17 +56,17 @@ struct CustomIndicatorPage {
     .padding({left: 20, top: 20})
   }
 
-  @Builder contentBuilder(item: PJTabBarItemInterface, index: number) {
-    Text(index.toString() + ' ' + item.title)
+  @Builder contentBuilder($$: PJReferenceTabBarItemInterface) {
+    Text($$.currentItemIndex.toString() + ' ' + $$.item.title)
       .width('100%')
       .height('100%')
       .textAlign(TextAlign.Center)
       .backgroundColor(Color.Green)
   }
 
-  @Builder contentBuilder2(item: PJTabBarItemInterface, index: number) {
+  @Builder contentBuilder2($$: PJReferenceTabBarItemInterface) {
     Column({space: 10}) {
-      Text(index.toString() + ' ' + item.title)
+      Text($$.currentItemIndex.toString() + ' ' + $$.item.title)
         .width('100%')
         .height(100)
         .textAlign(TextAlign.Center)
@@ -105,15 +106,17 @@ struct CustomIndicatorPage {
         List() {
           ListItem() {
             PJTabComponent({index: 0, items: this.items, tabBarOptions: this.options1,
-              contentBuilder: this.contentBuilder})
+              contentBuilder: ($$: PJReferenceTabBarItemInterface) => {
+                this.contentBuilder($$)
+              }})
           }
           .width('100%')
           .height(100)
 
           ListItem() {
             PJTabComponent({index: 2, items: this.items, tabBarOptions: this.options2,
-              contentBuilder: (item: PJTabBarItemInterface, index: number) => {
-                  this.contentBuilder2(item, index)
+              contentBuilder: ($$: PJReferenceTabBarItemInterface) => {
+                  this.contentBuilder2($$)
               },
               builder: {
                 customerIndicatorBuilder: this.customerIndicatorBuilderImage
@@ -126,7 +129,9 @@ struct CustomIndicatorPage {
 
           ListItem() {
             PJTabComponent({index: 0, items: this.items, tabBarOptions: this.options3,
-              contentBuilder: this.contentBuilder,
+              contentBuilder: ($$: PJReferenceTabBarItemInterface) => {
+                this.contentBuilder($$)
+              },
             })
           }
           .width('100%')

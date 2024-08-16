@@ -64,8 +64,6 @@ export interface PJTabBarOptionsInterface {
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean
   // 使item尽量滚到中间位置
   optimizeOffsetX?: number
-  // 是否开启懒加载页面
-  enableLazyLoad: boolean
 }
 
 @Observed
@@ -118,7 +116,6 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean = true
   // 使item尽量滚到中间位置
   optimizeOffsetX: number = 120
-  enableLazyLoad: boolean = false
 }
 
 /// 指示器位置（上，中，下）

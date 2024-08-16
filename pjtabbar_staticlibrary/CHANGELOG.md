@@ -1,3 +1,10 @@
+## v1.0.6 [2024.08.16]
+1. 修复当选中非第一个页签时，调用`PJTabComponentController`的`CRUD`操作后会跳转选中第一个页签的问题。
+2. 修复调用`PJTabComponentController`的`update`操作后, `contentBuiler` | `customerItemBuilder`中使用`PJTabBarItem`的`title`等属性的组件的UI没有跟着更新的问题。
+3. 修复调用`PJTabComponentController`的`update`操作后, 指示器的位置不居中的问题。
+4. 对数据源的操作统一放在`PJTabDataSource`中。
+5. 更新示例代码。
+
 ## v1.0.5 [2024.08.13]
 1. 修复CRUD操作后item的index没有更新，导致tabbarUI状态错乱。
 2. 修复CRUD操作后tabs content没更新。

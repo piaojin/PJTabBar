@@ -15,19 +15,11 @@
 
 import display from '@ohos.display'
 import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '../models/PJTabBarOptions'
-import {PJTabBarItemInterface} from '../models/PJTabBarItem'
+import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
-import {PJBuilder} from '../models/PJBuilder'
+import {PJBuilder, PJCustomerBuilderInterface, PJNullBuilder} from '../models/PJBuilder'
 import { PJTabDataSource } from '../models/PJTabDataSource'
-
-@Extend(Text) function ItemTextCommonExtend(isSelected: boolean, options: PJTabBarOptionsInterface) {
-  .fontSize(isSelected ? options.selectedFontSize : options.fontSize)
-  .fontColor(isSelected ? options.selectedFontColor : options.fontColor)
-  .fontWeight(isSelected ? options.selectedFontWeight : options.fontWeight)
-  .fontStyle(isSelected ? options.selectedFontStyle : options.fontStyle)
-  .fontFamily(options.fontFamily)
-  .textAlign(options.textAlign)
-}
+import { PJTabBarItemComponent } from './PJTabBarItemComponent'
 
 @Component
 export struct PJTabBar {
@@ -35,7 +27,7 @@ export struct PJTabBar {
   private defaultIndex: number = 0
   @Link index: number
   @Link items: PJTabBarItemInterface[]
-  private dataSource: PJTabDataSource = new PJTabDataSource()
+  dataSource: PJTabDataSource = new PJTabDataSource()
   // tabbar配置
   @Link tabBarOptions: PJTabBarOptionsInterface
   controller?: PJTabBarController | null
@@ -50,19 +42,19 @@ export struct PJTabBar {
   onSelectItem?: (item: PJTabBarItemInterface, index: number) => void
   // tabbar滚动到头
   onScrollEdge?: (side: Edge) => void | null
+  // 初始化完数据
+  onInitData?: () => void | null
 
   builder: PJBuilder = new PJBuilder()
 
   // 自定义item视图
-  @BuilderParam private customerItemBuilder: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void = this.nullBuilder
+  @BuilderParam private customerItemBuilder: ($$: PJCustomerBuilderInterface) => void = PJNullBuilder
   // 自定义Indicator，不需要设置width和height
-  @BuilderParam private customerIndicatorBuilder: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void = this.nullBuilder
+  @BuilderParam private customerIndicatorBuilder: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void = PJNullBuilder
   // 左边附加视图
-  @BuilderParam private leftItemBuilder: () => void = this.nullBuilder
+  @BuilderParam private leftItemBuilder: () => void = PJNullBuilder
   // 右边附加视图
-  @BuilderParam private rightItemBuilder: () => void = this.nullBuilder
-
-  @Builder private nullBuilder() {}
+  @BuilderParam private rightItemBuilder: () => void = PJNullBuilder
 
   // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
   private moveStartX: number = 0
@@ -79,10 +71,10 @@ export struct PJTabBar {
   private initData() {
     // 绑定TabBar数据源
     this.dataSource.setItems(this.items)
-    this.customerItemBuilder = this.builder.customerItemBuilder ?? this.nullBuilder
-    this.customerIndicatorBuilder = this.builder.customerIndicatorBuilder ?? this.nullBuilder
-    this.leftItemBuilder = this.builder.leftItemBuilder ?? this.nullBuilder
-    this.rightItemBuilder = this.builder.rightItemBuilder ?? this.nullBuilder
+    this.customerItemBuilder = this.builder.customerItemBuilder ?? PJNullBuilder
+    this.customerIndicatorBuilder = this.builder.customerIndicatorBuilder ?? PJNullBuilder
+    this.leftItemBuilder = this.builder.leftItemBuilder ?? PJNullBuilder
+    this.rightItemBuilder = this.builder.rightItemBuilder ?? PJNullBuilder
 
     if (!this.tabBarOptions) {
       this.tabBarOptions = new PJTabBarOptions()
@@ -91,15 +83,16 @@ export struct PJTabBar {
     this.hasInitData = true
     this.defaultIndex = this.index
 
-    // 初始化item的index
-    this.dataSource.updateItemValues(0, true)
-
     if (this.controller) {
       this.controller.bind(this)
     }
 
     if (this.tabBarOptions.indicatorPosition === PJIndicatorPosition.Center) {
       this.tabBarOptions.indicatorMargin = {top: 0, bottom: 0, left: 0, right: 0}
+    }
+
+    if (this.onInitData) {
+      this.onInitData()
     }
   }
 
@@ -180,10 +173,11 @@ export struct PJTabBar {
     this.delay(150, () => {
       this.scrollItemToIndex(index)
     })
-  }
 
-  private isSelectedItem(atIndex: number): boolean {
-    return this.index === atIndex
+    // 修复当CRUD item后，切换选中其他item后指示器位置有偏差。
+    this.delay(100, () => {
+      this.scrollIndicatorToIndex(this.index)
+    })
   }
 
   private getItemCenterX(index: number): number | null {
@@ -296,12 +290,19 @@ export struct PJTabBar {
 
   /// CRUD Actions
 
-  update(index: number, item: PJTabBarItemInterface) {
-    this.dataSource.update(index, item)
+  update(atIndex: number, item: PJTabBarItemInterface) {
+    this.dataSource.update(atIndex, item)
+    // 需要触发滚动指示器,以修复指示器不居中问题.
+    this.delay(100, () => {
+      this.selectItemAtIndex(this.index)
+    })
   }
 
   push(...items: PJTabBarItemInterface[]): number {
-    return this.dataSource.push(...items)
+    let newLength = this.dataSource.push(...items)
+    // 在tabbar末尾添加完新item之后执行一次选中当前的item，以使被选中的item更新滚动位置。
+    this.selectItemAtIndex(this.index)
+    return newLength
   }
 
   insert(atIndex: number, item: PJTabBarItemInterface) {
@@ -322,16 +323,15 @@ export struct PJTabBar {
   }
 
   delete(atIndex: number): PJTabBarItemInterface | null {
-    if (atIndex >= this.dataSource.totalCount()) {
+    if (atIndex >= this.dataSource.totalCount() || atIndex < 0) {
       return null
     }
 
-    let hasChangeIndex: boolean = false
+    let hasChangeIndex: boolean = atIndex <= this.index
     if (atIndex < this.index) {
       this.index -= 1
     } else if (atIndex === this.index) { // 如果删除的是当前选中的item,则默认重新选中第一个item。
       this.index = 0
-      hasChangeIndex = true
     }
 
     let deletedItems = this.dataSource.delete(atIndex)
@@ -386,7 +386,7 @@ export struct PJTabBar {
       if (this.tabBarOptions.indicatorPosition === PJIndicatorPosition.Center) {
         Stack() {
           this.indicatorBuilder(item, index)
-          this.textBuilder(item, index)
+          this.itemContentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
         }
         .alignContent(Alignment.Center)
       } else {
@@ -395,7 +395,7 @@ export struct PJTabBar {
           this.indicatorBuilder(item, index)
         }
 
-        this.textBuilder(item, index)
+        this.itemContentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
 
         // 滚动条位置在Text下
         if (this.tabBarOptions.indicatorPosition === PJIndicatorPosition.Bottom) {
@@ -424,7 +424,7 @@ export struct PJTabBar {
       if (this.defaultIndex === index) {
         Column() {
           Column() {
-            if (this.customerIndicatorBuilder !== this.nullBuilder) {
+            if (this.customerIndicatorBuilder !== PJNullBuilder) {
               Column() {
                 this.customerIndicatorBuilder(item, this.tabBarOptions, index)
               }
@@ -456,26 +456,14 @@ export struct PJTabBar {
     }
   }
 
-  @Builder private textBuilder(item: PJTabBarItemInterface, index: number) {
-    if (this.customerItemBuilder !== this.nullBuilder) {
-      // 启用外部自定义的Item
-      this.customerItemBuilder(item, this.tabBarOptions, index)
-    } else {
-      Text(item.title)
-        .ItemTextCommonExtend(this.isSelectedItem(index), this.tabBarOptions)
-        .backgroundColor(this.isSelectedItem(index) ? this.tabBarOptions.selectedItemBackgroundColor : this.tabBarOptions.itemBackgroundColor)
-        .border(this.isSelectedItem(index) ? this.tabBarOptions.selectedItemBorder : this.tabBarOptions.itemBorder)
-        .margin(this.tabBarOptions.itemMargin)
-        .maxLines(this.tabBarOptions.maxLines)
-        .width(this.tabBarOptions.itemWidth)
-        .height(this.tabBarOptions.itemHeight)
-    }
+  @Builder private itemContentBuilder($$: PJReferenceTabBarItemInterface) {
+    PJTabBarItemComponent({selectedItemIndex: $$.selectedItemIndex, currentItemIndex: $$.currentItemIndex, item: $$.item, tabBarOptions: this.tabBarOptions, customerItemBuilder: this.customerItemBuilder})
   }
 
   build() {
     Row() {
       // 左侧固定住的附加视图
-      if (this.leftItemBuilder !== this.nullBuilder && this.tabBarOptions.isLeftItemFixed) {
+      if (this.leftItemBuilder !== PJNullBuilder && this.tabBarOptions.isLeftItemFixed) {
         Column() {
           this.leftItemBuilder()
         }
@@ -488,7 +476,7 @@ export struct PJTabBar {
       Scroll(this.scroller) {
         Row({space: this.tabBarOptions.itemSpace}) {
           // 左侧附加视图
-          if (this.leftItemBuilder !== this.nullBuilder && !this.tabBarOptions.isLeftItemFixed) {
+          if (this.leftItemBuilder !== PJNullBuilder && !this.tabBarOptions.isLeftItemFixed) {
             Column() {
               this.leftItemBuilder()
             }
@@ -501,7 +489,7 @@ export struct PJTabBar {
           }, (item: PJTabBarItemInterface, index: number) => this.dataSource.identifier(index))
 
           // 右侧附加视图
-          if (this.rightItemBuilder !== this.nullBuilder && !this.tabBarOptions.isRightItemFixed) {
+          if (this.rightItemBuilder !== PJNullBuilder && !this.tabBarOptions.isRightItemFixed) {
             Column() {
               this.rightItemBuilder()
             }
@@ -530,7 +518,7 @@ export struct PJTabBar {
       })
 
       // 右侧固定住的附加视图
-      if (this.rightItemBuilder !== this.nullBuilder && this.tabBarOptions.isRightItemFixed) {
+      if (this.rightItemBuilder !== PJNullBuilder && this.tabBarOptions.isRightItemFixed) {
         Column() {
           this.rightItemBuilder()
         }
@@ -599,6 +587,10 @@ export class PJTabBarController {
    */
   bind(tabBar: PJTabBar) {
     this.weakMap.set(this.key, tabBar)
+  }
+
+  dataSource(): PJTabDataSource | undefined {
+    return this.weakMap.get(this.key)?.dataSource
   }
 
   /// CRUD Actions
@@ -685,5 +677,3 @@ export class PJTabBarController {
     return this.weakMap.get(this.key)?.getItem(atIndex)
   }
 }
-
-

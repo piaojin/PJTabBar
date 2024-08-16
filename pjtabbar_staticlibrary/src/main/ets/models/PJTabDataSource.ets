@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 
+import systemDateTime from '@ohos.systemDateTime';
 import { PJTabBarItemInterface } from './PJTabBarItem';
 import { util } from '@kit.ArkTS';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 /// Basic implementation of IDataSource to handle data listener
 export class PJTabDataSource implements IDataSource {
@@ -33,37 +35,36 @@ export class PJTabDataSource implements IDataSource {
   }
 
   public insert(atIndex: number, item: PJTabBarItemInterface) {
+    item.id = this.generateId()
+    item.index = atIndex
+    // 插入新数据前需要更新插入位置后后移的item的index和id
+    for(let index = atIndex; index < this.items.length; index++) {
+      this.items[index].index = index + 1
+      this.items[index].id = this.generateId()
+    }
     this.items.splice(atIndex, 0, item)
-    // 更新局部item.index值
-    this.updateItemValues(atIndex)
     this.notifyDataAdd(atIndex)
   }
 
   public push(... items: PJTabBarItemInterface[]): number {
     let oldLength = this.items.length
+    for (let i = 0; i < items.length; i++) {
+      items[i].index = i + oldLength
+      items[i].id = this.generateId()
+    }
     let newLength = this.items.push(...items)
-    this.updateItemValues(oldLength, true)
     this.notifyDataAdd(this.items.length - 1)
     return newLength
   }
 
   public update(atIndex: number, item: PJTabBarItemInterface) {
-    this.items.splice(atIndex, 1, item)
+    this.items[atIndex].title = item.title
     this.notifyDataChange(atIndex)
   }
 
-  public updateItemValues(fromIndex: number = 0, shouldResetId: boolean = false) {
-    for(let index = fromIndex; index < this.items.length; index++) {
-      this.items[index].index = index
-      if (shouldResetId) {
-        this.items[index].id = util.generateRandomUUID(false)
-      }
-    }
-  }
-
-  public setItems(items: PJTabBarItemInterface[]) {
-    this.items = items
-    this.updateItemValues(0, true)
+  public setItems(witItems: PJTabBarItemInterface[]) {
+    this.setUpItems(witItems)
+    this.items = witItems
     this.reloadData()
   }
 
@@ -73,9 +74,32 @@ export class PJTabDataSource implements IDataSource {
     }
 
     let deletedItems = this.items.splice(atIndex, 1)
-    this.updateItemValues(atIndex)
+    this.updateItemIndexs(atIndex)
+    this.updateItemIds(atIndex)
     this.notifyDataDelete(atIndex)
     return deletedItems
+  }
+
+  public updateItemIndexs(fromIndex: number = 0) {
+    for(let index = fromIndex; index < this.items.length; index++) {
+      this.items[index].index = index
+    }
+  }
+
+  public updateItemIds(fromIndex: number = 0) {
+    for(let index = fromIndex; index < this.items.length; index++) {
+      this.items[index].id = this.generateId()
+    }
+  }
+
+  /*
+   * Sync the item index and generate the item id.
+   */
+  public setUpItems(witItems: PJTabBarItemInterface[]) {
+    for(let index = 0; index < witItems.length; index++) {
+      witItems[index].index = index
+      witItems[index].id = this.generateId()
+    }
   }
 
   findIndex(predicate: (value: PJTabBarItemInterface, index: number, obj: PJTabBarItemInterface[]) => boolean, thisArg?: undefined): number {
@@ -133,11 +157,22 @@ export class PJTabDataSource implements IDataSource {
     })
   }
 
+  public generateId(): string {
+    let idStr = util.generateRandomUUID(false)
+    try {
+      let time = systemDateTime.getTime(true)
+      idStr += '_' + time
+    } catch (e) {
+      let error = e as BusinessError;
+      console.info(`Failed to get time. message: ${error.message}, code: ${error.code}`);
+    }
+    return idStr
+  }
+
   public identifier(index: number): string {
     let item = this.getData(index)
     if (item) {
-      let idstr = item.id + '_' + item.index.toString() + '_' + item.title
-      return idstr
+      return item.id
     }
     return util.generateRandomUUID(false)
   }

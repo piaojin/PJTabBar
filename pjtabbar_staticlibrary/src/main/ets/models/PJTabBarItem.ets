@@ -30,3 +30,12 @@ export class PJTabBarItem implements PJTabBarItemInterface {
     this.title = title
   }
 }
+
+/*
+ * 用于在@Builder中引用传递: 按引用传递参数时，传递的参数可为状态变量，且状态变量的改变会引起@Builder方法内的UI刷新 (https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/arkts-builder-0000001524176981-V2)
+ */
+export interface PJReferenceTabBarItemInterface {
+  currentItemIndex: number
+  selectedItemIndex: number
+  item: PJTabBarItemInterface
+}
