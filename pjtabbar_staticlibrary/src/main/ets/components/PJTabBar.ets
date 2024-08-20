@@ -14,7 +14,8 @@
  */
 
 import display from '@ohos.display'
-import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions} from '../models/PJTabBarOptions'
+import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions,
+  PJIndicatorAnimationType} from '../models/PJTabBarOptions'
 import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
 import {PJBuilder, PJCustomerBuilderInterface, PJNullBuilder} from '../models/PJBuilder'
@@ -30,6 +31,9 @@ export struct PJTabBar {
   dataSource: PJTabDataSource = new PJTabDataSource()
   // tabbar配置
   @Link tabBarOptions: PJTabBarOptionsInterface
+  // 指示器宽度和高度单独设置属性是因为在指示器联动模式下(this.tabBarOptions.indicatorAnimationType = PJIndicatorAnimationType.Linkage),直接使用并修改this.tabBarOptions.indicatorWidth，在快速滑动4时会导致page错乱，暂不知原因。
+  @Prop indicatorWidth: number = 20
+  @Prop indicatorHeight: number = 4
   controller?: PJTabBarController | null
   private scroller: Scroller = new Scroller()
   // indicator移动的距离, 即移动到选中的item的centerX下
@@ -80,6 +84,8 @@ export struct PJTabBar {
       this.tabBarOptions = new PJTabBarOptions()
     }
 
+    this.indicatorWidth = this.tabBarOptions.indicatorWidth ?? 20
+    this.indicatorHeight = this.tabBarOptions.indicatorHeight ?? 20
     this.hasInitData = true
     this.defaultIndex = this.index
 
@@ -105,12 +111,16 @@ export struct PJTabBar {
       this.hasInitTabPos = true
       this.scrollItemToIndex(this.index)
       if (this.tabBarOptions.isSameHeightWithItem) {
-        this.tabBarOptions.indicatorHeight = newArea.height as number
+        this.indicatorHeight = newArea.height as number
       }
 
       if (this.tabBarOptions.isSameWidthWithItem) {
-        this.tabBarOptions.indicatorWidth = newArea.width as number
+        this.indicatorWidth = newArea.width as number
       }
+    }
+
+    if (this.index === ofIndex) {
+      this.scrollIndicatorToIndex(this.index)
     }
   }
 
@@ -119,7 +129,7 @@ export struct PJTabBar {
   }
 
   /// 滚动indicator到新选中的item位置
-  private scrollIndicatorToIndex(newIndex: number) {
+  private scrollIndicatorToIndex(newIndex: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
     if (newIndex < this.attrs.size) {
       let oldArea = this.attrs.get(this.defaultIndex)
       let newArea = this.attrs.get(newIndex)
@@ -134,49 +144,49 @@ export struct PJTabBar {
           let oldItemCenterX = oldItemX + (oldArea.area.width as number) / 2
           newIndicatorOffseX = newItemCenterX - oldItemCenterX
         }
-        this.tempOffsetX = newIndicatorOffseX
-        animateTo({duration: this.tabBarOptions.indicatorAnimationDuration, curve: Curve.Linear}, () => {
-          this.indicatorOffsetX = newIndicatorOffseX
-          if (this.tabBarOptions.isSameWidthWithItem) {
+
+        if (this.indicatorOffsetX !== newIndicatorOffseX) {
+          this.tempOffsetX = newIndicatorOffseX
+          animateTo({duration: duration, curve: Curve.Linear}, () => {
+            this.indicatorOffsetX = newIndicatorOffseX
+            if (this.tabBarOptions.isSameHeightWithItem && newArea && this.indicatorHeight !== (newArea.area.height as number)) {
+              this.indicatorHeight = newArea.area.height as number
+            }
+          })
+        }
+
+        if (this.tabBarOptions.isSameWidthWithItem) {
+          // 更新indicatorWidth
+          let nextWidth = (newArea?.area.width ?? 0) as number
+          if (nextWidth !== this.indicatorWidth) {
             // 更新indicatorWidth
-            animateTo({duration: this.tabBarOptions.indicatorAnimationDuration, curve: Curve.Linear}, () => {
-              if (newArea) {
-                this.tabBarOptions.indicatorWidth = newArea.area.width as number
-              }
+            animateTo({duration: duration, curve: Curve.Linear}, () => {
+              this.indicatorWidth = nextWidth
             })
           }
-
-          if (this.tabBarOptions.isSameHeightWithItem && newArea && this.tabBarOptions.indicatorHeight !== (newArea.area.height as number)) {
-            this.tabBarOptions.indicatorHeight = newArea.area.height as number
-          }
-        })
+        }
       }
     }
   }
 
   /// 滚动item到指定index
-  private scrollItemToIndex(index: number) {
+  private scrollItemToIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
     if (index < this.attrs.size) {
       let attr = this.attrs.get(index)
       if (attr) {
         let optimizeOffsetX = this.tabBarOptions.optimizeOffsetX ?? 0
         // 使item尽量滚到中间位置
-        this.scroller.scrollTo({xOffset: (attr.area.position.x as number) - optimizeOffsetX, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: this.tabBarOptions.itemAnimationDuration, curve: Curve.Linear}})
+        this.scroller.scrollTo({xOffset: (attr.area.position.x as number) - optimizeOffsetX, yOffset: this.scroller.currentOffset().yOffset, animation: {duration: duration, curve: Curve.Linear}})
       }
     }
   }
 
-  selectItemAtIndex(index: number) {
+  selectItemAtIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
     this.index = index
-    this.scrollIndicatorToIndex(this.index)
+    this.scrollIndicatorToIndex(this.index, duration)
     // 改善指示器滚动过程中抖动问题
     this.delay(150, () => {
-      this.scrollItemToIndex(index)
-    })
-
-    // 修复当CRUD item后，切换选中其他item后指示器位置有偏差。
-    this.delay(100, () => {
-      this.scrollIndicatorToIndex(this.index)
+      this.scrollItemToIndex(index, duration)
     })
   }
 
@@ -217,12 +227,12 @@ export struct PJTabBar {
       })
   }
 
-  /// TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
-  onTouchPage(event: TouchEvent, currentIndex: number) {
-    if (this.tabBarOptions.indicatorPosition !== PJIndicatorPosition.Center) {
+  handleTouch(event: TouchEvent, currentIndex: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+    if (this.tabBarOptions.indicatorAnimationType !== PJIndicatorAnimationType.Linkage) {
       return
     }
 
+    // 记录手指触摸的位置和时间，用于计算手指滑动的偏移量和滑动时间。
     let startX = this.moveStartX
     let offset = 0
     if (event.type === TouchType.Down) {
@@ -230,59 +240,48 @@ export struct PJTabBar {
       this.moveStartTime = Date.now()
     }
 
+    // 手指滑动过程中更新指示器位置和宽度
     if (event.type === TouchType.Move) {
       offset = event.touches[0].x - startX
-      if ((offset >= 0 && currentIndex > 0) || (offset <= 0 && currentIndex < this.dataSource.totalCount() - 1)) {
+      if ((offset >= 0 && currentIndex > 0) || (offset <= 0 && currentIndex < this.items.length - 1)) {
         let isMoveToLeft: boolean = offset > 0
-        let targetIndex = isMoveToLeft ? currentIndex - 1 : currentIndex + 1
-        let targetCenterX = this.getItemCenterX(targetIndex)
-        if (targetCenterX) {
-          // 计算滚动百分比
+        let nextIndex = isMoveToLeft ? currentIndex - 1 : currentIndex + 1
+        let nextCenterX = this.getItemCenterX(nextIndex)
+        let currentCenterX = this.getItemCenterX(currentIndex)
+        if (nextCenterX && currentCenterX) {
+          // 计算滚动百分比, 更新指示器位置
           let movePercentage = Math.abs(offset) / px2vp(display.getDefaultDisplaySync().width)
           movePercentage = Math.min(movePercentage, 1)
-          let currentCenterX = this.getItemCenterX(currentIndex)
-          if (currentCenterX) {
-            let subIndicatorOffsetX = targetCenterX - currentCenterX
-            this.indicatorOffsetX = this.tempOffsetX + subIndicatorOffsetX * movePercentage
-            if (this.tabBarOptions.isSameWidthWithItem) {
-              let targetWidth = this.getItemWidth(targetIndex)
-              if (targetWidth) {
-                let newIndicatorWidth = targetWidth > (this.tabBarOptions.indicatorWidth ?? 20) ? targetWidth * movePercentage : targetWidth * (1 - movePercentage)
-                this.tabBarOptions.indicatorWidth = newIndicatorWidth
-              }
+          let subIndicatorOffsetX = nextCenterX - currentCenterX
+          this.indicatorOffsetX = this.tempOffsetX + subIndicatorOffsetX * movePercentage
+          // 更新指示器宽度
+          if (this.tabBarOptions.isSameWidthWithItem) {
+            let targetWidth = this.getItemWidth(nextIndex)
+            let currentWidth = this.getItemWidth(currentIndex)
+            if (targetWidth && currentWidth) {
+              let newIndicatorWidth = currentWidth + (targetWidth - currentWidth) * movePercentage
+              this.indicatorWidth = newIndicatorWidth
             }
           }
         }
       }
     }
 
+    // 手指抬起来时根据滑动的距离和手指接触的时间判断是否要滚动到下一个item。
     if (event.type === TouchType.Up) {
       this.moveEndTime = Date.now()
-      if (this.moveEndTime - this.moveStartTime <= 500) {
-        offset = 0
-        this.moveStartX = 0
-        this.moveStartTime = 0
-        this.moveEndTime = 0
-        return
-      }
-
-      let movePercentage = Math.abs(offset) / px2vp(display.getDefaultDisplaySync().width)
-      offset = 0
+      let touchDuration = this.moveEndTime - this.moveStartTime
+      let offset = event.touches[0].x - startX
       this.moveStartX = 0
       this.moveStartTime = 0
       this.moveEndTime = 0
-
-      if (movePercentage >= 0.5) {
-        if (this.tabBarOptions.indicatorAnimationDuration) {
-          this.delay(this.tabBarOptions.indicatorAnimationDuration, () => {
-            this.scrollIndicatorToIndex(this.index + (offset > 0 ? -1 : 1))
-          })
-        }
-      } else {
-        if (this.tabBarOptions.indicatorAnimationDuration) {
-          this.delay(this.tabBarOptions.indicatorAnimationDuration, () => {
-            this.scrollIndicatorToIndex(this.index)
-          })
+      if (touchDuration <= 500) {
+        // 手指滑动距离30存在误差，可能30时并没有成功切换到下一个item, 不过这种误差在UI上是指示器向反方向偏移了一点，然后滚动到正确的位置上，是可以接受的。
+        if (Math.abs(offset) >= 30) {
+          let nextIndex = this.index + (offset > 0 ? -1 : 1)
+          if (nextIndex >= 0 && nextIndex <= this.dataSource.totalCount() - 1) {
+            this.scrollIndicatorToIndex(nextIndex, duration)
+          }
         }
       }
     }
@@ -374,8 +373,8 @@ export struct PJTabBar {
   }
 
   @Styles private indicatorStyles() {
-    .width(this.tabBarOptions.indicatorWidth)
-    .height(this.tabBarOptions.indicatorHeight)
+    .width(this.indicatorWidth)
+    .height(this.indicatorHeight)
     .borderRadius(this.tabBarOptions.indicatorBorderRadius)
     .clip(true)
     .margin(this.tabBarOptions.indicatorMargin)
@@ -428,18 +427,18 @@ export struct PJTabBar {
               Column() {
                 this.customerIndicatorBuilder(item, this.tabBarOptions, index)
               }
-              .width(this.tabBarOptions.indicatorWidth)
-              .height(this.tabBarOptions.indicatorHeight)
+              .width(this.indicatorWidth)
+              .height(this.indicatorHeight)
               .margin(this.tabBarOptions.indicatorMargin)
               .clip(true)
             } else {
               Divider()
                 .indicatorStyles()
                 .color(this.tabBarOptions.indicatorColor)
-                .strokeWidth(this.tabBarOptions.indicatorHeight)
+                .strokeWidth(this.indicatorHeight)
             }
           }
-          .width(this.tabBarOptions.indicatorWidth)
+          .width(this.indicatorWidth)
         }
         /// 这里控制indicator的位置, indicatorOffsetX的值为被选中的item的centerX
         .offset({x: this.indicatorOffsetX, y: 0})
@@ -449,7 +448,7 @@ export struct PJTabBar {
       } else {
         Divider()
           .width(0)
-          .height(this.tabBarOptions.indicatorHeight)
+          .height(this.indicatorHeight)
           .margin(this.tabBarOptions.indicatorMargin)
           .color(Color.Transparent)
       }
@@ -570,15 +569,15 @@ export class PJTabBarController {
    * Select the item at index. And will also scroll the indicator to the selected item.
    * @param index The new selected item index.
    */
-  selectItemAtIndex(index: number) {
-    this.weakMap.get(this.key)?.selectItemAtIndex(index)
+  selectItemAtIndex(index: number, duration: number | undefined = this.weakMap.get(this.key)?.tabBarOptions.itemAnimationDuration) {
+    this.weakMap.get(this.key)?.selectItemAtIndex(index, duration)
   }
 
   /**
-   * TODO: Linkage indicator and page.
+   * Linkage indicator and page.
    */
-  onTouchPage(event: TouchEvent, currentIndex: number) {
-    this.weakMap.get(this.key)?.onTouchPage(event, currentIndex)
+  handleTouch(event: TouchEvent, currentIndex: number, duration: number | undefined = this.weakMap.get(this.key)?.tabBarOptions.itemAnimationDuration) {
+    this.weakMap.get(this.key)?.handleTouch(event, currentIndex, duration)
   }
 
   /**

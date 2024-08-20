@@ -3,8 +3,9 @@ import { PJTabBarItemInterface } from '../models/PJTabBarItem'
 import { PJTabBarOptionsInterface } from '../models/PJTabBarOptions'
 
 @Extend(Text) function ItemTextCommonExtend(isSelected: boolean, options: PJTabBarOptionsInterface) {
-  .fontSize(isSelected ? options.selectedFontSize : options.fontSize)
   .fontColor(isSelected ? options.selectedFontColor : options.fontColor)
+  .animation({ duration: options.selectedFontColorAnimationDuration, curve: Curve.Linear })
+  .fontSize(isSelected ? options.selectedFontSize : options.fontSize)
   .fontWeight(isSelected ? options.selectedFontWeight : options.fontWeight)
   .fontStyle(isSelected ? options.selectedFontStyle : options.fontStyle)
   .fontFamily(options.fontFamily)

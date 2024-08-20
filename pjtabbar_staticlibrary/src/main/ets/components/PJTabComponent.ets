@@ -31,6 +31,7 @@ export struct PJTabComponent {
   @State private hasBindDataSource: boolean = false
   @State tabBarOptions: PJTabBarOptionsInterface = new PJTabBarOptions()
   @State private tabsIndex: number = 0
+  private isOnAnimation: boolean = false
   controller?: PJTabComponentController | null
 
   // 点击了item
@@ -61,8 +62,9 @@ export struct PJTabComponent {
     return this.tabBarController.currentIndex()
   }
 
-  changeIndex(index: number) {
-    this.tabBarController.selectItemAtIndex(index)
+
+  changeIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+    this.tabBarController.selectItemAtIndex(index, duration)
     this.tabsController.changeIndex(index)
   }
 
@@ -168,15 +170,12 @@ export struct PJTabComponent {
             }
             .align(Alignment.TopStart)
             .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
-            // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
-            // .onTouch((event) => {
-            //   this.tabBarController.onTouchPage(event, this.index)
-            // })
           }, (item: PJTabBarItemInterface, index: number) => {
             return this.dataSource.identifier(index)
           })
         }
         .barHeight(0)
+        .animationDuration(this.tabBarOptions.tabsAnimationDuration)
         .onChange((index: number) => {
           this.tabsIndex = index
           if (this.onChangePage) {
@@ -187,12 +186,23 @@ export struct PJTabComponent {
           }
         })
         .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
-          if (this.index !== targetIndex) {
+          this.isOnAnimation = true
+          if (index !== targetIndex) {
             this.tabBarController.selectItemAtIndex(targetIndex)
+          } else {
+            this.tabBarController.selectItemAtIndex(index, this.tabBarOptions.tabsAnimationDuration)
+          }
+        })
+        .onAnimationEnd((index: number, event: TabsAnimationEvent) => {
+          this.isOnAnimation = false
+          this.tabBarController.selectItemAtIndex(index)
+        })
+        .onTouch((event) => {
+          if (!this.isOnAnimation) {
+            this.tabBarController.handleTouch(event, this.index)
           }
         })
       }
-
     }
     .alignItems(HorizontalAlign.Start)
     .width('100%')
@@ -217,8 +227,8 @@ export class PJTabComponentController {
    * Change the content page to the index. The tabbar will also select the new index.
    * @param index Index of the target page.
    */
-  changeIndex(index: number) {
-    this.weakMap.get(this.key)?.changeIndex(index)
+  changeIndex(index: number, duration: number | undefined = this.weakMap.get(this.key)?.tabBarOptions.itemAnimationDuration) {
+    this.weakMap.get(this.key)?.changeIndex(index, duration)
   }
 
   /**

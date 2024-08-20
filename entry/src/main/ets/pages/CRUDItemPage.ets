@@ -1,5 +1,6 @@
 import {PJTabComponent, PJTabComponentController, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions,
   PJReferenceTabBarItemInterface} from '@piaojin/pjtabbar'
+import { PJIndicatorAnimationType } from '@piaojin/pjtabbar/src/main/ets/models/PJTabBarOptions'
 
 /*
  * 用于在@Builder中引用传递: 按引用传递参数时，传递的参数可为状态变量，且状态变量的改变会引起@Builder方法内的UI刷新 (https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/arkts-builder-0000001524176981-V2)
@@ -39,6 +40,8 @@ struct CRUDItemPage {
     this.options.selectedFontSize = 16
     this.options.selectedFontColor = Color.Orange
     this.options.tabBarContentMargin = { left: 10, right: 10 }
+    this.options.indicatorAnimationType = PJIndicatorAnimationType.Linkage
+    this.options.isSameWidthWithItem = true
   }
 
   @Builder titleBuilder() {
@@ -98,7 +101,7 @@ struct CRUDItemPage {
 
             Button('Delete')
               .onClick(() => {
-                this.controller.delete(3)
+                this.controller.delete(0)
               })
           }
           .margin({ top: 30 })

@@ -18,6 +18,7 @@ export interface PJTabBarOptionsInterface {
   selectedFontSize?: number
   fontColor: ResourceColor
   selectedFontColor?: ResourceColor
+  selectedFontColorAnimationDuration: number
   fontWeight: number | FontWeight | string
   selectedFontWeight?: number | FontWeight | string
   fontStyle?: FontStyle
@@ -64,6 +65,7 @@ export interface PJTabBarOptionsInterface {
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean
   // 使item尽量滚到中间位置
   optimizeOffsetX?: number
+  tabsAnimationDuration: number
 }
 
 @Observed
@@ -72,6 +74,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   selectedFontSize: number = 15
   fontColor: ResourceColor = Color.Black
   selectedFontColor: ResourceColor = Color.Blue
+  selectedFontColorAnimationDuration: number = 200
   fontWeight: number | FontWeight | string = FontWeight.Regular
   selectedFontWeight: number | FontWeight | string = FontWeight.Regular
   fontStyle: FontStyle = FontStyle.Normal
@@ -116,6 +119,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean = true
   // 使item尽量滚到中间位置
   optimizeOffsetX: number = 120
+  tabsAnimationDuration: number = 300
 }
 
 /// 指示器位置（上，中，下）
@@ -125,5 +129,6 @@ export enum PJIndicatorPosition {
 
 /// 指示器滚动动画
 export enum PJIndicatorAnimationType {
-  Linear
+  Linear,
+  Linkage
 }
