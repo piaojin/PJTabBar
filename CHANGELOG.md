@@ -1,3 +1,10 @@
+## v1.0.7 [2024.08.21]
+1. 指示器添加联动效果
+2. 对于传入接口的index添加有效范围判断，如果传入的index无效，则不响应操作。
+3. 添加接口`preloadItems`,用于提前加载指定的tab content.
+4. 添加配置项`tabsAnimationDuration: number`,设置tab content切换page时的动画时长。
+5. 添加配置项`tabContentScrollable: boolean`,控制tab content是否可以滑动。
+
 ## v1.0.6 [2024.08.16]
 1. 修复当选中非第一个页签时，调用`PJTabComponentController`的`CRUD`操作后会跳转选中第一个页签的问题。
 2. 修复调用`PJTabComponentController`的`update`操作后, `contentBuiler` | `customerItemBuilder`中使用`PJTabBarItem`的`title`等属性的组件的UI没有跟着更新的问题。

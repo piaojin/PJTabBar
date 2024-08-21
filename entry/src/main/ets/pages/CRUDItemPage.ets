@@ -26,8 +26,7 @@ struct PJContentBuilderWrap {
 @Component
 struct CRUDItemPage {
   private items: PJTabBarItemInterface[] = [new PJTabBarItem('红烧猪蹄'), new PJTabBarItem('猫山王榴莲'), new PJTabBarItem('龙眼'), new PJTabBarItem('荔枝'),
-    new PJTabBarItem('牛杂面'), new PJTabBarItem('烤羊腿'), new PJTabBarItem('牛肉火锅'), new PJTabBarItem('蓝鳍金枪鱼刺身')
-  ]
+    new PJTabBarItem('牛杂面'), new PJTabBarItem('烤羊腿'), new PJTabBarItem('牛肉火锅'), new PJTabBarItem('蓝鳍金枪鱼刺身')]
   private options: PJTabBarOptionsInterface = new PJTabBarOptions()
   private controller: PJTabComponentController = new PJTabComponentController()
   @State private crudIndex: number = 0
@@ -41,7 +40,6 @@ struct CRUDItemPage {
     this.options.selectedFontColor = Color.Orange
     this.options.tabBarContentMargin = { left: 10, right: 10 }
     this.options.indicatorAnimationType = PJIndicatorAnimationType.Linkage
-    this.options.isSameWidthWithItem = true
   }
 
   @Builder titleBuilder() {

@@ -66,6 +66,7 @@ export interface PJTabBarOptionsInterface {
   // 使item尽量滚到中间位置
   optimizeOffsetX?: number
   tabsAnimationDuration: number
+  tabContentScrollable: boolean
 }
 
 @Observed
@@ -120,6 +121,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   // 使item尽量滚到中间位置
   optimizeOffsetX: number = 120
   tabsAnimationDuration: number = 300
+  tabContentScrollable: boolean = true
 }
 
 /// 指示器位置（上，中，下）

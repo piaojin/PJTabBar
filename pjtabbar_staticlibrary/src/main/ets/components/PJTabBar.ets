@@ -19,7 +19,7 @@ import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions,
 import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
 import {PJBuilder, PJCustomerBuilderInterface, PJNullBuilder} from '../models/PJBuilder'
-import { PJTabDataSource } from '../models/PJTabDataSource'
+import { PJTabDataSource } from '../datasources/PJTabDataSource'
 import { PJTabBarItemComponent } from './PJTabBarItemComponent'
 
 @Component
@@ -43,6 +43,8 @@ export struct PJTabBar {
   private hasInitData: boolean = false
   private hasInitTabPos: boolean = false
   @State private scrollHeight: number = 0
+  // 页签的宽度，用于指示器联动时判断手势滑动距离的百分比，默认tab content是撑满屏幕宽度。
+  private tabContentWidth: number = px2vp(display.getDefaultDisplaySync().width)
   onSelectItem?: (item: PJTabBarItemInterface, index: number) => void
   // tabbar滚动到头
   onScrollEdge?: (side: Edge) => void | null
@@ -60,7 +62,6 @@ export struct PJTabBar {
   // 右边附加视图
   @BuilderParam private rightItemBuilder: () => void = PJNullBuilder
 
-  // TODO: 采用onTouch手势滑动距离来处理indicator跟随page内容滚动打不到理想效果,等API11采用onGestureSwipe实现
   private moveStartX: number = 0
   private moveStartTime: number = 0
   private moveEndTime: number = 0
@@ -73,6 +74,7 @@ export struct PJTabBar {
   }
 
   private initData() {
+    this.index = Math.min(Math.max(this.index, this.items.length - 1), 0)
     // 绑定TabBar数据源
     this.dataSource.setItems(this.items)
     this.customerItemBuilder = this.builder.customerItemBuilder ?? PJNullBuilder
@@ -130,6 +132,11 @@ export struct PJTabBar {
 
   /// 滚动indicator到新选中的item位置
   private scrollIndicatorToIndex(newIndex: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+    if (!this.isValidIndex(newIndex)) {
+      console.error(`[PJTabBar] [Error]`, `scrollIndicatorToIndex: newIndex ${newIndex} out of range`)
+      return
+    }
+
     if (newIndex < this.attrs.size) {
       let oldArea = this.attrs.get(this.defaultIndex)
       let newArea = this.attrs.get(newIndex)
@@ -171,6 +178,11 @@ export struct PJTabBar {
 
   /// 滚动item到指定index
   private scrollItemToIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+    if (!this.isValidIndex(index)) {
+      console.error(`[PJTabBar] [Error]`, `scrollItemToIndex: index ${index} out of range`)
+      return
+    }
+
     if (index < this.attrs.size) {
       let attr = this.attrs.get(index)
       if (attr) {
@@ -182,6 +194,11 @@ export struct PJTabBar {
   }
 
   selectItemAtIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+    if (!this.isValidIndex(index)) {
+      console.error(`[PJTabBar] [Error]`, `selectItemAtIndex: index ${index} out of range`)
+      return
+    }
+
     this.index = index
     this.scrollIndicatorToIndex(this.index, duration)
     // 改善指示器滚动过程中抖动问题
@@ -216,6 +233,10 @@ export struct PJTabBar {
     return null
   }
 
+  private isValidIndex(index: number): boolean {
+    return index >= 0 && index <= this.dataSource.totalCount() - 1
+  }
+
   private delay(duration: number, handler: () => void) {
     new Promise<void>((resolve, _) => {
       setTimeout(() => {
@@ -228,7 +249,7 @@ export struct PJTabBar {
   }
 
   handleTouch(event: TouchEvent, currentIndex: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
-    if (this.tabBarOptions.indicatorAnimationType !== PJIndicatorAnimationType.Linkage) {
+    if (this.tabBarOptions.indicatorAnimationType !== PJIndicatorAnimationType.Linkage || !this.tabBarOptions.tabContentScrollable) {
       return
     }
 
@@ -250,7 +271,7 @@ export struct PJTabBar {
         let currentCenterX = this.getItemCenterX(currentIndex)
         if (nextCenterX && currentCenterX) {
           // 计算滚动百分比, 更新指示器位置
-          let movePercentage = Math.abs(offset) / px2vp(display.getDefaultDisplaySync().width)
+          let movePercentage = Math.abs(offset) / this.tabContentWidth
           movePercentage = Math.min(movePercentage, 1)
           let subIndicatorOffsetX = nextCenterX - currentCenterX
           this.indicatorOffsetX = this.tempOffsetX + subIndicatorOffsetX * movePercentage
@@ -290,6 +311,10 @@ export struct PJTabBar {
   /// CRUD Actions
 
   update(atIndex: number, item: PJTabBarItemInterface) {
+    if (!this.isValidIndex(atIndex)) {
+      console.error(`[PJTabBar] [Error]`, `update: atIndex ${atIndex} out of range`)
+      return
+    }
     this.dataSource.update(atIndex, item)
     // 需要触发滚动指示器,以修复指示器不居中问题.
     this.delay(100, () => {
@@ -305,14 +330,18 @@ export struct PJTabBar {
   }
 
   insert(atIndex: number, item: PJTabBarItemInterface) {
-    let fixedIndex = Math.min(Math.max(atIndex, 0), this.dataSource.totalCount())
-    if (fixedIndex <= this.index) {
+    if (!this.isValidIndex(atIndex)) {
+      console.error(`[PJTabBar] [Error]`, `insert: atIndex ${atIndex} out of range`)
+      return
+    }
+
+    if (atIndex <= this.index) {
       this.index += 1
     }
 
-    this.dataSource.insert(fixedIndex, item)
+    this.dataSource.insert(atIndex, item)
 
-    if (fixedIndex <= this.index) {
+    if (atIndex <= this.index) {
       this.selectItemAtIndex(this.index)
     }
 
@@ -322,7 +351,8 @@ export struct PJTabBar {
   }
 
   delete(atIndex: number): PJTabBarItemInterface | null {
-    if (atIndex >= this.dataSource.totalCount() || atIndex < 0) {
+    if (!this.isValidIndex(atIndex)) {
+      console.error(`[PJTabBar] [Error]`, `delete: atIndex ${atIndex} out of range`)
       return null
     }
 
@@ -369,7 +399,15 @@ export struct PJTabBar {
   }
 
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
+    if (!this.isValidIndex(atIndex)) {
+      console.error(`[PJTabBar] [Error]`, `getItem: atIndex ${atIndex} out of range`)
+      return undefined
+    }
     return this.dataSource.getData(atIndex)
+  }
+
+  syncTabContentWidth(width: number) {
+    this.tabContentWidth = width
   }
 
   @Styles private indicatorStyles() {
@@ -485,7 +523,7 @@ export struct PJTabBar {
 
           ForEach(this.items, (item: PJTabBarItemInterface, index) => {
             this.itemBuilder(item, index)
-          }, (item: PJTabBarItemInterface, index: number) => this.dataSource.identifier(index))
+          }, (_: PJTabBarItemInterface, index: number) => this.dataSource.identifier(index))
 
           // 右侧附加视图
           if (this.rightItemBuilder !== PJNullBuilder && !this.tabBarOptions.isRightItemFixed) {
@@ -674,5 +712,15 @@ export class PJTabBarController {
    */
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
     return this.weakMap.get(this.key)?.getItem(atIndex)
+  }
+
+  /**
+   * Set the tab content width to tabbar. And the linkpage indicator will use it to calculate the percentage of gesture sliding.
+   * The default value is the width of the device.
+   * Note: If PJTabComponent does not fully fill the screen, this interface needs to be called to set the tab content width.
+   * @param width used to set the tab content width.
+   */
+  syncTabContentWidth(width: number) {
+    this.weakMap.get(this.key)?.syncTabContentWidth(width)
   }
 }

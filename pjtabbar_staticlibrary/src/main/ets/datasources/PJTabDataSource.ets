@@ -14,7 +14,7 @@
  */
 
 import systemDateTime from '@ohos.systemDateTime';
-import { PJTabBarItemInterface } from './PJTabBarItem';
+import { PJTabBarItemInterface } from '../models/PJTabBarItem';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
 

@@ -17,7 +17,7 @@ import {PJTabBarOptionsInterface, PJTabBarOptions} from '../models/PJTabBarOptio
 import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBar, PJTabBarController} from './PJTabBar'
 import {PJBuilder, PJNullBuilder} from '../models/PJBuilder'
-import { PJTabDataSource } from '../models/PJTabDataSource'
+import { PJTabDataSource } from '../datasources/PJTabDataSource'
 
 @Component
 export struct PJTabComponent {
@@ -51,6 +51,7 @@ export struct PJTabComponent {
   aboutToAppear() {
     if (!this.hasInit) {
       this.hasInit = true
+      this.index = Math.min(Math.max(this.index, this.items.length - 1), 0)
       this.tabsIndex = this.index.valueOf()
       if (this.controller) {
         this.controller.bind(this)
@@ -61,7 +62,6 @@ export struct PJTabComponent {
   currentIndex(): number {
     return this.tabBarController.currentIndex()
   }
-
 
   changeIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
     this.tabBarController.selectItemAtIndex(index, duration)
@@ -126,6 +126,14 @@ export struct PJTabComponent {
     return this.tabBarController.getItem(atIndex)
   }
 
+  preloadItems(indices: Optional<Array<number>>): Promise<void> {
+    return this.tabsController.preloadItems(indices)
+  }
+
+  syncTabContentWidth(width: number) {
+    this.tabBarController.syncTabContentWidth(width)
+  }
+
   private delay(duration: number, handler: () => void) {
     new Promise<void>((resolve, _) => {
       setTimeout(() => {
@@ -170,11 +178,12 @@ export struct PJTabComponent {
             }
             .align(Alignment.TopStart)
             .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
-          }, (item: PJTabBarItemInterface, index: number) => {
+          }, (_: PJTabBarItemInterface, index: number) => {
             return this.dataSource.identifier(index)
           })
         }
         .barHeight(0)
+        .scrollable(this.tabBarOptions.tabContentScrollable)
         .animationDuration(this.tabBarOptions.tabsAnimationDuration)
         .onChange((index: number) => {
           this.tabsIndex = index
@@ -185,7 +194,7 @@ export struct PJTabComponent {
             }
           }
         })
-        .onAnimationStart((index: number, targetIndex: number, event: TabsAnimationEvent) => {
+        .onAnimationStart((index: number, targetIndex: number, _: TabsAnimationEvent) => {
           this.isOnAnimation = true
           if (index !== targetIndex) {
             this.tabBarController.selectItemAtIndex(targetIndex)
@@ -193,7 +202,7 @@ export struct PJTabComponent {
             this.tabBarController.selectItemAtIndex(index, this.tabBarOptions.tabsAnimationDuration)
           }
         })
-        .onAnimationEnd((index: number, event: TabsAnimationEvent) => {
+        .onAnimationEnd((index: number, _: TabsAnimationEvent) => {
           this.isOnAnimation = false
           this.tabBarController.selectItemAtIndex(index)
         })
@@ -201,6 +210,9 @@ export struct PJTabComponent {
           if (!this.isOnAnimation) {
             this.tabBarController.handleTouch(event, this.index)
           }
+        })
+        .onAreaChange((_, newArea: Area) => {
+          this.syncTabContentWidth(newArea.width.valueOf() as number)
         })
       }
     }
@@ -319,6 +331,30 @@ export class PJTabComponentController {
    */
   getItem(atIndex: number): PJTabBarItemInterface | undefined {
     return this.weakMap.get(this.key)?.getItem(atIndex)
+  }
+
+  /**
+   * Called when need to preload specified tab content.
+   *
+   * @param { Optional<Array<number>> } indices - Indices of tab content to be preloaded.
+   * @returns { Promise<void> } The promise returned by the function.
+   * @throws { BusinessError } 401 - Parameter invalid. Possible causes:
+   * <br> 1. The parameter type is not Array<number>.
+   * <br> 2. The parameter is an empty array.
+   * <br> 3. The parameter contains an invalid index.
+   */
+  preloadItems(indices: Optional<Array<number>>): Promise<void> | undefined {
+    return this.weakMap.get(this.key)?.preloadItems(indices)
+  }
+
+  /**
+   * Set the tab content width to tabbar. And the linkpage indicator will use it to calculate the percentage of gesture sliding.
+   * The default value is the width of the device.
+   * Note: If PJTabComponent does not fully fill the screen, this interface needs to be called to set the tab content width.
+   * @param width used to set the tab content width.
+   */
+  syncTabContentWidth(width: number) {
+    this.weakMap.get(this.key)?.syncTabContentWidth(width)
   }
 }
 
