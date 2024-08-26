@@ -1,5 +1,6 @@
 import {PJTabComponent, PJTabBar, PJIndicatorPosition, PJTabBarItemInterface, PJTabBarItem, PJTabBarOptionsInterface, PJTabBarOptions,
-  PJReferenceTabBarItemInterface} from '@piaojin/pjtabbar'
+  PJReferenceTabBarItemInterface,
+  PJCustomerBuilderInterface} from '@piaojin/pjtabbar'
 import router from '@ohos.router'
 
 @Entry
@@ -96,7 +97,7 @@ struct CustomIndicatorPage {
     }
   }
 
-  @Builder customerIndicatorBuilderImage(item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) {
+  @Builder customerIndicatorBuilderImage($$: PJCustomerBuilderInterface) {
     Image($r('app.media.durian'))
   }
 
@@ -119,7 +120,9 @@ struct CustomIndicatorPage {
                   this.contentBuilder2($$)
               },
               builder: {
-                customerIndicatorBuilder: this.customerIndicatorBuilderImage
+                customerIndicatorBuilder: ($$: PJCustomerBuilderInterface) => {
+                  this.customerIndicatorBuilderImage($$)
+                }
               }
             })
           }

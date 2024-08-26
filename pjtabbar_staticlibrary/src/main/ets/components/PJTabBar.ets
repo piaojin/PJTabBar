@@ -56,7 +56,7 @@ export struct PJTabBar {
   // 自定义item视图
   @BuilderParam private customerItemBuilder: ($$: PJCustomerBuilderInterface) => void = PJNullBuilder
   // 自定义Indicator，不需要设置width和height
-  @BuilderParam private customerIndicatorBuilder: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void = PJNullBuilder
+  @BuilderParam private customerIndicatorBuilder: ($$: PJCustomerBuilderInterface) => void = PJNullBuilder
   // 左边附加视图
   @BuilderParam private leftItemBuilder: () => void = PJNullBuilder
   // 右边附加视图
@@ -410,14 +410,6 @@ export struct PJTabBar {
     this.tabContentWidth = width
   }
 
-  @Styles private indicatorStyles() {
-    .width(this.indicatorWidth)
-    .height(this.indicatorHeight)
-    .borderRadius(this.tabBarOptions.indicatorBorderRadius)
-    .clip(true)
-    .margin(this.tabBarOptions.indicatorMargin)
-  }
-
   @Builder private itemBuilder(item: PJTabBarItemInterface, index: number) {
     Column() {
       if (this.tabBarOptions.indicatorPosition === PJIndicatorPosition.Center) {
@@ -460,20 +452,21 @@ export struct PJTabBar {
     if (!this.tabBarOptions.isHideIndicator) {
       if (this.defaultIndex === index) {
         Column() {
-          Column() {
+          Row() {
             if (this.customerIndicatorBuilder !== PJNullBuilder) {
               Column() {
-                this.customerIndicatorBuilder(item, this.tabBarOptions, index)
+                this.customerIndicatorBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item, tabBarOptions: this.tabBarOptions})
               }
               .width(this.indicatorWidth)
               .height(this.indicatorHeight)
               .margin(this.tabBarOptions.indicatorMargin)
-              .clip(true)
             } else {
-              Divider()
-                .indicatorStyles()
-                .color(this.tabBarOptions.indicatorColor)
-                .strokeWidth(this.indicatorHeight)
+              Text('')
+                .width(this.indicatorWidth)
+                .height(this.indicatorHeight)
+                .borderRadius(this.tabBarOptions.indicatorBorderRadius)
+                .margin(this.tabBarOptions.indicatorMargin)
+                .backgroundColor(this.tabBarOptions.indicatorColor)
             }
           }
           .width(this.indicatorWidth)
@@ -484,11 +477,11 @@ export struct PJTabBar {
         .clip(false)
         .backgroundColor(Color.Transparent)
       } else {
-        Divider()
+        Text('')
           .width(0)
           .height(this.indicatorHeight)
           .margin(this.tabBarOptions.indicatorMargin)
-          .color(Color.Transparent)
+          .backgroundColor(Color.Transparent)
       }
     }
   }

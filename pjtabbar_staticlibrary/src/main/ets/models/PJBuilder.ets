@@ -23,7 +23,7 @@ export class PJBuilder {
   // 自定义item视图
   customerItemBuilder?: ($$: PJCustomerBuilderInterface) => void | null
   // 自定义Indicator，不需要设置width和height
-  customerIndicatorBuilder?: (item: PJTabBarItemInterface, options: PJTabBarOptionsInterface, index: number) => void | null
+  customerIndicatorBuilder?: ($$: PJCustomerBuilderInterface) => void | null
   // 左边附加视图
   leftItemBuilder?: () => void | null
   // 右边附加视图
