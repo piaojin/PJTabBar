@@ -1,3 +1,7 @@
+## v1.0.8 [2024.08.27]
+1. 修复设置isSameWidthWithItem=true时，指示器从长变短时一闪而过，不平滑的问题。
+2. Item添加均分布局PJItemEqualDistributionType，注意至于单item不超出PJTabBar宽度时才有效果。
+
 ## v1.0.7 [2024.08.21]
 1. 指示器添加联动效果
 2. 对于传入接口的index添加有效范围判断，如果传入的index无效，则不响应操作。
