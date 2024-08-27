@@ -69,6 +69,10 @@ export interface PJTabBarOptionsInterface {
   optimizeOffsetX?: number
   tabsAnimationDuration: number
   tabContentScrollable: boolean
+  enableRecycling: boolean
+  cachedCount: number
+  disableSwipe: boolean
+  displayArrow: [ArrowStyle | boolean, boolean]
 }
 
 @Observed
@@ -126,6 +130,10 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   optimizeOffsetX: number = 120
   tabsAnimationDuration: number = 300
   tabContentScrollable: boolean = true
+  enableRecycling: boolean = false
+  cachedCount: number = 1
+  disableSwipe: boolean = false
+  displayArrow: [ArrowStyle | boolean, boolean] = [false, false]
 }
 
 /// 指示器位置（上，中，下）

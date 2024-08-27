@@ -23,6 +23,7 @@ import { PJTabDataSource } from '../datasources/PJTabDataSource'
 export struct PJTabComponent {
   private tabsController: TabsController = new TabsController()
   private tabBarController: PJTabBarController = new PJTabBarController()
+  private swiperController: SwiperController = new SwiperController()
   private hasInit: boolean = false
 
   @State index: number = 0
@@ -65,7 +66,11 @@ export struct PJTabComponent {
 
   changeIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
     this.tabBarController.selectItemAtIndex(index, duration)
-    this.tabsController.changeIndex(index)
+    if (this.tabBarOptions.enableRecycling) {
+      this.swiperController.changeIndex(index, true)
+    } else {
+      this.tabsController.changeIndex(index)
+    }
   }
 
   private bindDataSource() {
@@ -110,7 +115,11 @@ export struct PJTabComponent {
     this.tabsIndex = defaultIndex
     this.tabBarController.setItems(withItems, selectIndex)
     this.delay(100, () => {
-      this.tabsController.changeIndex(defaultIndex)
+      if (this.tabBarOptions.enableRecycling) {
+        this.swiperController.changeIndex(defaultIndex, true)
+      } else {
+        this.tabsController.changeIndex(defaultIndex)
+      }
     })
   }
 
@@ -127,11 +136,63 @@ export struct PJTabComponent {
   }
 
   preloadItems(indices: Optional<Array<number>>): Promise<void> {
-    return this.tabsController.preloadItems(indices)
+    if (this.tabBarOptions.enableRecycling) {
+      return Promise.reject("enableRecycling is true and preloadItems doesn't work. Set enableRecycling to false if want using preloadItems.")
+    } else {
+      return this.tabsController.preloadItems(indices)
+    }
   }
 
   syncTabContentWidth(width: number) {
     this.tabBarController.syncTabContentWidth(width)
+  }
+
+  private handleOnSelectItem(index: number, item: PJTabBarItemInterface) {
+    if (this.tabBarOptions.enableRecycling) {
+      this.swiperController.changeIndex(index, true)
+    } else {
+      this.tabsController.changeIndex(index)
+    }
+
+    if (this.onClickTabBarItem) {
+      this.onClickTabBarItem(item, index)
+    }
+
+    if (this.onChangeTabBarItem) {
+      this.onChangeTabBarItem(item, index)
+    }
+  }
+
+  private handleOnAnimationStart(index: number, targetIndex: number, extraInfo: SwiperAnimationEvent) {
+    this.isOnAnimation = true
+    if (index !== targetIndex) {
+      this.tabBarController.selectItemAtIndex(targetIndex)
+    } else if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
+      this.tabBarController.selectItemAtIndex(index, this.tabBarOptions.tabsAnimationDuration)
+    }
+  }
+
+  private handleOnAnimationEnd(index: number, extraInfo: SwiperAnimationEvent) {
+    this.isOnAnimation = false
+    if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
+      this.tabBarController.selectItemAtIndex(index)
+    }
+  }
+
+  private handleOnTouch(event: TouchEvent) {
+    if (!this.isOnAnimation) {
+      this.tabBarController.handleTouch(event, this.index)
+    }
+  }
+
+  private handleOnChange(index: number) {
+    this.tabsIndex = index
+    if (this.onChangePage) {
+      let item = this.getItem(index)
+      if (item) {
+        this.onChangePage(item, index)
+      }
+    }
   }
 
   private delay(duration: number, handler: () => void) {
@@ -150,14 +211,7 @@ export struct PJTabComponent {
       PJTabBar({index: $index, items: $items, tabBarOptions: $tabBarOptions, controller: this.tabBarController,
         builder: this.builder,
         onSelectItem: (item: PJTabBarItemInterface, index: number) => {
-          this.tabsController.changeIndex(index)
-          if (this.onClickTabBarItem) {
-            this.onClickTabBarItem(item, index)
-          }
-
-          if (this.onChangeTabBarItem) {
-            this.onChangeTabBarItem(item, index)
-          }
+          this.handleOnSelectItem(index, item)
         },
         onScrollEdge: (side) => {
           if (this.onScrollEdge) {
@@ -170,52 +224,71 @@ export struct PJTabComponent {
       })
 
       if (this.hasBindDataSource) {
-        // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然. 需要在每次更新this.index时更新this.tabsIndex,否则CRUD操作后会出现Tabs自动选中第一个page的问题。
-        Tabs({controller: this.tabsController, index: this.tabsIndex}) {
-          ForEach(this.items, (item: PJTabBarItemInterface, index: number) => {
-            TabContent() {
+        if (this.tabBarOptions.enableRecycling) {
+          Swiper(this.swiperController) {
+            LazyForEach(this.dataSource, (item: PJTabBarItemInterface, index: number) => {
               this.contentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
-            }
-            .align(Alignment.TopStart)
-            .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
-          }, (_: PJTabBarItemInterface, index: number) => {
-            return this.dataSource.identifier(index)
+            }, (_: PJTabBarItemInterface, index: number) => {
+              return this.dataSource.identifier(index)
+            })
+          }
+          .cachedCount(this.tabBarOptions.cachedCount)
+          .index(this.tabsIndex)
+          .autoPlay(false)
+          .indicator(false)
+          .loop(false)
+          .duration(this.tabBarOptions.tabsAnimationDuration)
+          .itemSpace(0)
+          .curve(Curve.Linear)
+          .disableSwipe(this.tabBarOptions.disableSwipe)
+          .displayArrow(this.tabBarOptions.displayArrow[0], this.tabBarOptions.displayArrow[1])
+          .onChange((index: number) => {
+            this.handleOnChange(index)
+          })
+          .onAnimationStart((index: number, targetIndex: number, extraInfo: SwiperAnimationEvent) => {
+            this.handleOnAnimationStart(index, targetIndex, extraInfo)
+          })
+          .onAnimationEnd((index: number, extraInfo: SwiperAnimationEvent) => {
+            this.handleOnAnimationEnd(index, extraInfo)
+          })
+          .onTouch((event) => {
+            this.handleOnTouch(event)
+          })
+          .onAreaChange((_, newArea: Area) => {
+            this.syncTabContentWidth(newArea.width.valueOf() as number)
+          })
+        } else {
+          // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然. 需要在每次更新this.index时更新this.tabsIndex,否则CRUD操作后会出现Tabs自动选中第一个page的问题。
+          Tabs({controller: this.tabsController, index: this.tabsIndex}) {
+            ForEach(this.items, (item: PJTabBarItemInterface, index: number) => {
+              TabContent() {
+                this.contentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
+              }
+              .align(Alignment.TopStart)
+              .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
+            }, (_: PJTabBarItemInterface, index: number) => {
+              return this.dataSource.identifier(index)
+            })
+          }
+          .barHeight(0)
+          .scrollable(this.tabBarOptions.tabContentScrollable)
+          .animationDuration(this.tabBarOptions.tabsAnimationDuration)
+          .onChange((index: number) => {
+            this.handleOnChange(index)
+          })
+          .onAnimationStart((index: number, targetIndex: number, extraInfo: SwiperAnimationEvent) => {
+            this.handleOnAnimationStart(index, targetIndex, extraInfo)
+          })
+          .onAnimationEnd((index: number, extraInfo: SwiperAnimationEvent) => {
+            this.handleOnAnimationEnd(index, extraInfo)
+          })
+          .onTouch((event) => {
+            this.handleOnTouch(event)
+          })
+          .onAreaChange((_, newArea: Area) => {
+            this.syncTabContentWidth(newArea.width.valueOf() as number)
           })
         }
-        .barHeight(0)
-        .scrollable(this.tabBarOptions.tabContentScrollable)
-        .animationDuration(this.tabBarOptions.tabsAnimationDuration)
-        .onChange((index: number) => {
-          this.tabsIndex = index
-          if (this.onChangePage) {
-            let item = this.getItem(index)
-            if (item) {
-              this.onChangePage(item, index)
-            }
-          }
-        })
-        .onAnimationStart((index: number, targetIndex: number, _: TabsAnimationEvent) => {
-          this.isOnAnimation = true
-          if (index !== targetIndex) {
-            this.tabBarController.selectItemAtIndex(targetIndex)
-          } else if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
-            this.tabBarController.selectItemAtIndex(index, this.tabBarOptions.tabsAnimationDuration)
-          }
-        })
-        .onAnimationEnd((index: number, _: TabsAnimationEvent) => {
-          this.isOnAnimation = false
-          if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
-            this.tabBarController.selectItemAtIndex(index)
-          }
-        })
-        .onTouch((event) => {
-          if (!this.isOnAnimation) {
-            this.tabBarController.handleTouch(event, this.index)
-          }
-        })
-        .onAreaChange((_, newArea: Area) => {
-          this.syncTabContentWidth(newArea.width.valueOf() as number)
-        })
       }
     }
     .alignItems(HorizontalAlign.Start)
