@@ -36,6 +36,8 @@ export interface PJTabBarOptionsInterface {
   itemAnimationDuration?: number
   // 所有item的布局位置
   itemAlign?: Alignment
+  // item均分布局
+  itemEqualDistributionType: PJItemEqualDistributionType
   tabBarVerticalAlign?: VerticalAlign
   maxLines?: number
   indicatorWidth?: number
@@ -92,6 +94,8 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   itemMargin: Margin = {top: 0, bottom: 0, left: 0, right: 0}
   itemAnimationDuration: number = 300
   itemAlign: Alignment = Alignment.Center
+  // item均分布局
+  itemEqualDistributionType: PJItemEqualDistributionType = PJItemEqualDistributionType.None
   tabBarVerticalAlign?: VerticalAlign = VerticalAlign.Top
   maxLines: number = 1
   indicatorWidth: number = 20
@@ -133,4 +137,23 @@ export enum PJIndicatorPosition {
 export enum PJIndicatorAnimationType {
   Linear,
   Linkage
+}
+
+export enum PJItemEqualDistributionType {
+  /*
+   * Item不均分布局
+  */
+  None,
+  /*
+   * Flex主轴方向均匀分配弹性元素，相邻元素之间距离相同。第一个元素与行首对齐，最后一个元素与行尾对齐。
+  */
+  SpaceBetween,
+  /*
+   * Flex主轴方向均匀分配弹性元素，相邻元素之间距离相同。第一个元素到行首的距离和最后一个元素到行尾的距离是相邻元素之间距离的一半。
+  */
+  SpaceAround,
+  /*
+   * Flex主轴方向均匀分配弹性元素，相邻元素之间的距离、第一个元素与行首的间距、最后一个元素到行尾的间距都完全一样。
+  */
+  SpaceEvenly
 }

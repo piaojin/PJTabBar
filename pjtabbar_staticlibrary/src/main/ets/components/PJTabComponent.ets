@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {PJTabBarOptionsInterface, PJTabBarOptions} from '../models/PJTabBarOptions'
+import {PJTabBarOptionsInterface, PJTabBarOptions, PJIndicatorAnimationType} from '../models/PJTabBarOptions'
 import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBar, PJTabBarController} from './PJTabBar'
 import {PJBuilder, PJNullBuilder} from '../models/PJBuilder'
@@ -198,13 +198,15 @@ export struct PJTabComponent {
           this.isOnAnimation = true
           if (index !== targetIndex) {
             this.tabBarController.selectItemAtIndex(targetIndex)
-          } else {
+          } else if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
             this.tabBarController.selectItemAtIndex(index, this.tabBarOptions.tabsAnimationDuration)
           }
         })
         .onAnimationEnd((index: number, _: TabsAnimationEvent) => {
           this.isOnAnimation = false
-          this.tabBarController.selectItemAtIndex(index)
+          if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
+            this.tabBarController.selectItemAtIndex(index)
+          }
         })
         .onTouch((event) => {
           if (!this.isOnAnimation) {

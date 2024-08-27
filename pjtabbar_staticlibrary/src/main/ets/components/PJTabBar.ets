@@ -15,7 +15,8 @@
 
 import display from '@ohos.display'
 import {PJTabBarOptionsInterface, PJIndicatorPosition, PJTabBarOptions,
-  PJIndicatorAnimationType} from '../models/PJTabBarOptions'
+  PJIndicatorAnimationType,
+  PJItemEqualDistributionType} from '../models/PJTabBarOptions'
 import { PJReferenceTabBarItemInterface, PJTabBarItemInterface} from '../models/PJTabBarItem'
 import {PJTabBarItemAttribute} from '../models/PJTabBarItemAttribute'
 import {PJBuilder, PJCustomerBuilderInterface, PJNullBuilder} from '../models/PJBuilder'
@@ -406,6 +407,16 @@ export struct PJTabBar {
     return this.dataSource.getData(atIndex)
   }
 
+  getFlexAlign(): FlexAlign {
+    switch (this.tabBarOptions.itemEqualDistributionType) {
+      case PJItemEqualDistributionType.None: return FlexAlign.Start
+      case PJItemEqualDistributionType.SpaceBetween: return FlexAlign.SpaceBetween
+      case PJItemEqualDistributionType.SpaceAround: return FlexAlign.SpaceAround
+      case PJItemEqualDistributionType.SpaceEvenly: return FlexAlign.SpaceEvenly
+      default: return FlexAlign.Start
+    }
+  }
+
   syncTabContentWidth(width: number) {
     this.tabContentWidth = width
   }
@@ -527,6 +538,8 @@ export struct PJTabBar {
             .visibility(this.tabBarOptions.isHideRightItem ? Visibility.None : Visibility.Visible)
           }
         }
+        .width(this.tabBarOptions.itemEqualDistributionType === PJItemEqualDistributionType.None ? null : '100%')
+        .justifyContent(this.getFlexAlign())
       }
       .backgroundColor(this.tabBarOptions.tabBarBackGround)
       .scrollBar(BarState.Off)
