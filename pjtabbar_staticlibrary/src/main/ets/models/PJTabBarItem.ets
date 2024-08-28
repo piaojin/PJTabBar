@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { common } from '@kit.AbilityKit'
 
 /// id与index由TabBar内部赋值，无需外部传入值。
 export interface PJTabBarItemInterface {
@@ -26,8 +27,17 @@ export class PJTabBarItem implements PJTabBarItemInterface {
   index: number = 0
   title: string
 
-  constructor(title: string) {
-    this.title = title
+  constructor(title: string | Resource) {
+    if (typeof title === 'string') {
+      this.title = title
+    } else {
+      this.title = this.getStringFromResource(title)
+    }
+  }
+
+  private getStringFromResource(source: Resource): string {
+    let context = getContext(this) as common.UIAbilityContext
+    return context.resourceManager.getStringSync(source.id)
   }
 }
 
