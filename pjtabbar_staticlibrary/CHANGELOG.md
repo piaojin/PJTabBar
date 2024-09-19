@@ -1,3 +1,6 @@
+## v1.1.0 [2024.09.19]
+1. 修复PJTabBarOptionsInterface.itemEqualDistributionType无法赋值问题。
+
 ## v1.0.9 [2024.08.28]
 1. PJTabComponent添加Swiper实现(设置enableRecycling = true), 当页签滑出屏幕外时，回收该页签内存以节省内存。
 回收时机依据`PJTabBarOptions`中的`cachedCount`属性值，e.g: cachedCount = 2, 页签有1，2，3，4，5，6，当页签1被滑动出去后并且当前滑动到页签4，此时页签1被回收, 页签2，3还在cache中(`cachedCount = 2`), 即`cachedCount`指可以被滑动出界面并且被缓存的页签数量。

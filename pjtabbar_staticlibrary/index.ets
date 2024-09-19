@@ -17,6 +17,6 @@ export {PJTabBar, PJTabBarController} from "./src/main/ets/components/PJTabBar"
 export {PJTabComponent, PJTabComponentController} from "./src/main/ets/components/PJTabComponent"
 export {PJTabBarItemInterface, PJTabBarItem, PJReferenceTabBarItemInterface} from "./src/main/ets/models/PJTabBarItem"
 export {PJTabBarItemAttribute} from "./src/main/ets/models/PJTabBarItemAttribute"
-export {PJTabBarOptionsInterface, PJTabBarOptions, PJIndicatorPosition, PJIndicatorAnimationType as PJScrollStyle} from "./src/main/ets/models/PJTabBarOptions"
+export {PJTabBarOptionsInterface, PJTabBarOptions, PJIndicatorPosition, PJIndicatorAnimationType, PJItemEqualDistributionType} from "./src/main/ets/models/PJTabBarOptions"
 export {PJBuilder, PJCustomerBuilderInterface} from "./src/main/ets/models/PJBuilder"
 
