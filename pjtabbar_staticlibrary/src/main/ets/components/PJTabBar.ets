@@ -132,7 +132,7 @@ export struct PJTabBar {
   }
 
   /// 滚动indicator到新选中的item位置
-  private scrollIndicatorToIndex(newIndex: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+  private scrollIndicatorToIndex(newIndex: number, duration: number | undefined = this.tabBarOptions.indicatorAnimationDuration) {
     if (!this.isValidIndex(newIndex)) {
       console.error(`[PJTabBar] [Error]`, `scrollIndicatorToIndex: newIndex ${newIndex} out of range`)
       return
@@ -194,17 +194,17 @@ export struct PJTabBar {
     }
   }
 
-  selectItemAtIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+  selectItemAtIndex(index: number, itemAnimationDuration: number | undefined = this.tabBarOptions.itemAnimationDuration, indicatorAnimationDuration: number | undefined = this.tabBarOptions.indicatorAnimationDuration) {
     if (!this.isValidIndex(index)) {
       console.error(`[PJTabBar] [Error]`, `selectItemAtIndex: index ${index} out of range`)
       return
     }
 
     this.index = index
-    this.scrollIndicatorToIndex(this.index, duration)
+    this.scrollIndicatorToIndex(this.index, indicatorAnimationDuration)
     // 改善指示器滚动过程中抖动问题
     this.delay(150, () => {
-      this.scrollItemToIndex(index, duration)
+      this.scrollItemToIndex(index, itemAnimationDuration)
     })
   }
 
