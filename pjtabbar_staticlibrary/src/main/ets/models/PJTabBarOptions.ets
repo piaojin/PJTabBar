@@ -63,6 +63,8 @@ export interface PJTabBarOptionsInterface {
   // tabbar整个内容的间距
   tabBarContentMargin?: Margin
   tabBarBorder?: BorderOptions
+  // tabbar的高度，默认由item内容撑开高度。
+  tabBarHeight?: number
   isTabBarWidthFillParent?: boolean
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean
   // 使item尽量滚到中间位置
@@ -124,6 +126,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   tabBarBackGround: ResourceColor = Color.White
   tabBarContentMargin: Margin = {top: 0, bottom: 0, left: 0, right: 0}
   tabBarBorder?: BorderOptions = undefined
+  tabBarHeight?: number
   isTabBarWidthFillParent?: boolean = true
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean = true
   // 使item尽量滚到中间位置
