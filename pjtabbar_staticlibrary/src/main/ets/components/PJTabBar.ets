@@ -548,7 +548,7 @@ export struct PJTabBar {
       .layoutWeight(this.tabBarOptions.isTabBarWidthFillParent ? 1 : 0)
       // 这里控制item的位置，比如居左居右
       .align(this.tabBarOptions.itemAlign)
-      .edgeEffect(this.tabBarOptions.edgeEffect)
+      .edgeEffect(this.tabBarOptions.tabBarEdgeEffect)
       .padding(this.tabBarOptions.tabBarContentMargin)
       .border(this.tabBarOptions.tabBarBorder)
       .onAreaChange((oldArea: Area, newArea: Area) => {

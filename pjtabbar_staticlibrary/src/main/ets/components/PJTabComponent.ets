@@ -243,6 +243,8 @@ export struct PJTabComponent {
           .curve(Curve.Linear)
           .disableSwipe(this.tabBarOptions.disableSwipe)
           .displayArrow(this.tabBarOptions.displayArrow[0], this.tabBarOptions.displayArrow[1])
+          .effectMode(this.tabBarOptions.tabContentEdgeEffect)
+          .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
           .onChange((index: number) => {
             this.handleOnChange(index)
           })
@@ -258,7 +260,6 @@ export struct PJTabComponent {
           .onAreaChange((_, newArea: Area) => {
             this.syncTabContentWidth(newArea.width.valueOf() as number)
           })
-          .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
         } else {
           // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然. 需要在每次更新this.index时更新this.tabsIndex,否则CRUD操作后会出现Tabs自动选中第一个page的问题。
           Tabs({controller: this.tabsController, index: this.tabsIndex}) {
@@ -276,6 +277,7 @@ export struct PJTabComponent {
           .barHeight(0)
           .scrollable(this.tabBarOptions.tabContentScrollable)
           .animationDuration(this.tabBarOptions.tabsAnimationDuration)
+          .edgeEffect(this.tabBarOptions.tabContentEdgeEffect)
           .onChange((index: number) => {
             this.handleOnChange(index)
           })

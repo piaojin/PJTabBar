@@ -46,7 +46,7 @@ struct CustomIndicatorPage {
     this.segmentOptions.itemMargin = {top: 4, bottom: 4, left: 15, right: 15}
     this.segmentOptions.itemSpace = 10
     this.segmentOptions.tabBarContentMargin = {top: 2, bottom: 2, left: 2, right: 2}
-    this.segmentOptions.edgeEffect = EdgeEffect.None
+    this.segmentOptions.tabBarEdgeEffect = EdgeEffect.None
     this.segmentOptions.scrollable = ScrollDirection.None
     this.segmentOptions.isTabBarWidthFillParent = false
     this.segmentOptions.tabBarBorder = {radius: 14}

@@ -74,6 +74,7 @@ struct CustomItemPage {
       .height('100%')
       .textAlign(TextAlign.Center)
       .backgroundColor(Color.Green)
+      .expandSafeArea([SafeAreaType.SYSTEM])
   }
 
   /*
