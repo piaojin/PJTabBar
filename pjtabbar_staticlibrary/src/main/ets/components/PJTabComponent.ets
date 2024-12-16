@@ -222,6 +222,7 @@ export struct PJTabComponent {
           this.bindDataSource()
         }
       })
+        .height(this.tabBarOptions.tabBarHeight)
 
       if (this.hasBindDataSource) {
         if (this.tabBarOptions.enableRecycling) {
