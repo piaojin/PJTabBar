@@ -75,6 +75,7 @@ export interface PJTabBarOptionsInterface {
   cachedCount: number
   disableSwipe: boolean
   displayArrow: [ArrowStyle | boolean, boolean]
+  expandSafeArea: [types?: Array<SafeAreaType>, edges?: Array<SafeAreaEdge>]
 }
 
 @Observed
@@ -137,6 +138,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   cachedCount: number = 1
   disableSwipe: boolean = false
   displayArrow: [ArrowStyle | boolean, boolean] = [false, false]
+  expandSafeArea: [types?: Array<SafeAreaType>, edges?: Array<SafeAreaEdge>] = [[SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM]]
 }
 
 /// 指示器位置（上，中，下）

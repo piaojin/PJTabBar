@@ -258,6 +258,7 @@ export struct PJTabComponent {
           .onAreaChange((_, newArea: Area) => {
             this.syncTabContentWidth(newArea.width.valueOf() as number)
           })
+          .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
         } else {
           // 这边index如果传入this.index会形成与Tabs绑定,导致在onAnimationStart回调中调用selectItemAtIndex时过早更新this.index,造成page切换动画很快结束,过渡不自然. 需要在每次更新this.index时更新this.tabsIndex,否则CRUD操作后会出现Tabs自动选中第一个page的问题。
           Tabs({controller: this.tabsController, index: this.tabsIndex}) {
@@ -266,7 +267,8 @@ export struct PJTabComponent {
                 this.contentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
               }
               .align(Alignment.TopStart)
-              .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
+              .margin({bottom: 0})
+              .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
             }, (_: PJTabBarItemInterface, index: number) => {
               return this.dataSource.identifier(index)
             })
@@ -295,6 +297,7 @@ export struct PJTabComponent {
     .alignItems(HorizontalAlign.Start)
     .width('100%')
     .height('100%')
+    .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
   }
 }
 
