@@ -570,7 +570,6 @@ export struct PJTabBar {
         .layoutWeight(this.tabBarOptions.isTabBarWidthFillParent ? 0 : 1)
       }
     }
-    .height(this.tabBarOptions.tabBarHeight)
     // 这里控制scroll的位置，比如居上居下居中
     .alignItems(this.tabBarOptions.tabBarVerticalAlign)
   }
