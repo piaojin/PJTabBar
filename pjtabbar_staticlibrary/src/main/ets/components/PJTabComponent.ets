@@ -52,7 +52,7 @@ export struct PJTabComponent {
   aboutToAppear() {
     if (!this.hasInit) {
       this.hasInit = true
-      this.index = Math.min(Math.max(this.index, this.items.length - 1), 0)
+      this.index = Math.max(Math.min(this.index, this.items.length - 1), 0)
       this.tabsIndex = this.index.valueOf()
       if (this.controller) {
         this.controller.bind(this)

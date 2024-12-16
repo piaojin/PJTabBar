@@ -75,7 +75,7 @@ export struct PJTabBar {
   }
 
   private initData() {
-    this.index = Math.min(Math.max(this.index, this.items.length - 1), 0)
+    this.index = Math.max(Math.min(this.index, this.items.length - 1), 0)
     // 绑定TabBar数据源
     this.dataSource.setItems(this.items)
     this.customerItemBuilder = this.builder.customerItemBuilder ?? PJNullBuilder
