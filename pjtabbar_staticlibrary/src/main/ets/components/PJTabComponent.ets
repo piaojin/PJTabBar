@@ -172,7 +172,7 @@ export struct PJTabComponent {
     }
   }
 
-  private handleOnAnimationEnd(index: number, extraInfo: SwiperAnimationEvent) {
+  private handleOnAnimationEnd(index: number, extraInfo?: SwiperAnimationEvent) {
     this.isOnAnimation = false
     if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
       this.tabBarController.selectItemAtIndex(index)
@@ -186,6 +186,13 @@ export struct PJTabComponent {
   }
 
   private handleOnChange(index: number) {
+    // 当this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linear时:
+    // 修复特殊手势操作下导致onAnimationEnd不回调，进而不调用handleOnAnimationEnd，导致指示器位置不更新。
+    // 比如手指按住内容区水平划动不松手，划到下一页时再松手（可用左右手指交替划动不要松手），此时indicator并没有更新。
+    if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linear && !this.isOnAnimation && index != this.tabBarController.currentIndex()) {
+      this.tabBarController.selectItemAtIndex(index)
+    }
+
     this.tabsIndex = index
     if (this.onChangePage) {
       let item = this.getItem(index)
