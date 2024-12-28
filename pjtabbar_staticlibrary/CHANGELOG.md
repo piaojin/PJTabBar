@@ -1,3 +1,14 @@
+## v1.1.1 [2024.12.17] With My M4 Pro Mac Min🌝
+### 修复以下Issues:
+1. 设置options.itemHeight=0时下面会有一段间距如何控制
+2. PJTabBar({ index: this.customTabIndex, items: this.items, tabBarOptions: this.options } index传值总是被重置为0
+3. tabcontent 底部有一点间距, 感觉很不合理, 如果必须可以默认, 也可以增加熟悉进行设置
+4. 默认选中索引问题
+5. 希望内容也可以支持设置edgeEffect
+6. indicatorAnimationType = PJIndicatorAnimationType.Linear时的bug
+7. tabBarVerticalAlign属性设置后好像没有用
+8. indicatorAnimationDuration 感觉属性好像没用
+
 ## v1.1.0 [2024.09.19]
 1. 修复PJTabBarOptionsInterface.itemEqualDistributionType无法赋值问题。
 

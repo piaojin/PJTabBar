@@ -52,7 +52,7 @@ export struct PJTabComponent {
   aboutToAppear() {
     if (!this.hasInit) {
       this.hasInit = true
-      this.index = Math.min(Math.max(this.index, this.items.length - 1), 0)
+      this.index = Math.max(Math.min(this.index, this.items.length - 1), 0)
       this.tabsIndex = this.index.valueOf()
       if (this.controller) {
         this.controller.bind(this)
@@ -172,7 +172,7 @@ export struct PJTabComponent {
     }
   }
 
-  private handleOnAnimationEnd(index: number, extraInfo: SwiperAnimationEvent) {
+  private handleOnAnimationEnd(index: number, extraInfo?: SwiperAnimationEvent) {
     this.isOnAnimation = false
     if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linkage) {
       this.tabBarController.selectItemAtIndex(index)
@@ -186,6 +186,13 @@ export struct PJTabComponent {
   }
 
   private handleOnChange(index: number) {
+    // 当this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linear时:
+    // 修复特殊手势操作下导致onAnimationEnd不回调，进而不调用handleOnAnimationEnd，导致指示器位置不更新。
+    // 比如手指按住内容区水平划动不松手，划到下一页时再松手（可用左右手指交替划动不要松手），此时indicator并没有更新。
+    if (this.tabBarOptions.indicatorAnimationType === PJIndicatorAnimationType.Linear && !this.isOnAnimation && index != this.tabBarController.currentIndex()) {
+      this.tabBarController.selectItemAtIndex(index)
+    }
+
     this.tabsIndex = index
     if (this.onChangePage) {
       let item = this.getItem(index)
@@ -222,6 +229,7 @@ export struct PJTabComponent {
           this.bindDataSource()
         }
       })
+        .height(this.tabBarOptions.tabBarHeight)
 
       if (this.hasBindDataSource) {
         if (this.tabBarOptions.enableRecycling) {
@@ -242,6 +250,8 @@ export struct PJTabComponent {
           .curve(Curve.Linear)
           .disableSwipe(this.tabBarOptions.disableSwipe)
           .displayArrow(this.tabBarOptions.displayArrow[0], this.tabBarOptions.displayArrow[1])
+          .effectMode(this.tabBarOptions.tabContentEdgeEffect)
+          .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
           .onChange((index: number) => {
             this.handleOnChange(index)
           })
@@ -265,7 +275,8 @@ export struct PJTabComponent {
                 this.contentBuilder({currentItemIndex: index, selectedItemIndex: this.index, item: item})
               }
               .align(Alignment.TopStart)
-              .margin({bottom: 42}) // 修复TabContent底部超出大概42vp屏幕问题
+              .margin({bottom: 0})
+              .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
             }, (_: PJTabBarItemInterface, index: number) => {
               return this.dataSource.identifier(index)
             })
@@ -273,6 +284,7 @@ export struct PJTabComponent {
           .barHeight(0)
           .scrollable(this.tabBarOptions.tabContentScrollable)
           .animationDuration(this.tabBarOptions.tabsAnimationDuration)
+          .edgeEffect(this.tabBarOptions.tabContentEdgeEffect)
           .onChange((index: number) => {
             this.handleOnChange(index)
           })
@@ -294,6 +306,7 @@ export struct PJTabComponent {
     .alignItems(HorizontalAlign.Start)
     .width('100%')
     .height('100%')
+    .expandSafeArea(this.tabBarOptions.expandSafeArea[0], this.tabBarOptions.expandSafeArea[1])
   }
 }
 

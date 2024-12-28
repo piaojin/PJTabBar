@@ -75,7 +75,7 @@ export struct PJTabBar {
   }
 
   private initData() {
-    this.index = Math.min(Math.max(this.index, this.items.length - 1), 0)
+    this.index = Math.max(Math.min(this.index, this.items.length - 1), 0)
     // 绑定TabBar数据源
     this.dataSource.setItems(this.items)
     this.customerItemBuilder = this.builder.customerItemBuilder ?? PJNullBuilder
@@ -132,7 +132,7 @@ export struct PJTabBar {
   }
 
   /// 滚动indicator到新选中的item位置
-  private scrollIndicatorToIndex(newIndex: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+  private scrollIndicatorToIndex(newIndex: number, duration: number | undefined = this.tabBarOptions.indicatorAnimationDuration) {
     if (!this.isValidIndex(newIndex)) {
       console.error(`[PJTabBar] [Error]`, `scrollIndicatorToIndex: newIndex ${newIndex} out of range`)
       return
@@ -194,17 +194,17 @@ export struct PJTabBar {
     }
   }
 
-  selectItemAtIndex(index: number, duration: number | undefined = this.tabBarOptions.itemAnimationDuration) {
+  selectItemAtIndex(index: number, itemAnimationDuration: number | undefined = this.tabBarOptions.itemAnimationDuration, indicatorAnimationDuration: number | undefined = this.tabBarOptions.indicatorAnimationDuration) {
     if (!this.isValidIndex(index)) {
       console.error(`[PJTabBar] [Error]`, `selectItemAtIndex: index ${index} out of range`)
       return
     }
 
     this.index = index
-    this.scrollIndicatorToIndex(this.index, duration)
+    this.scrollIndicatorToIndex(this.index, indicatorAnimationDuration)
     // 改善指示器滚动过程中抖动问题
     this.delay(150, () => {
-      this.scrollItemToIndex(index, duration)
+      this.scrollItemToIndex(index, itemAnimationDuration)
     })
   }
 
@@ -548,7 +548,7 @@ export struct PJTabBar {
       .layoutWeight(this.tabBarOptions.isTabBarWidthFillParent ? 1 : 0)
       // 这里控制item的位置，比如居左居右
       .align(this.tabBarOptions.itemAlign)
-      .edgeEffect(this.tabBarOptions.edgeEffect)
+      .edgeEffect(this.tabBarOptions.tabBarEdgeEffect)
       .padding(this.tabBarOptions.tabBarContentMargin)
       .border(this.tabBarOptions.tabBarBorder)
       .onAreaChange((oldArea: Area, newArea: Area) => {

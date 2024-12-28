@@ -58,11 +58,14 @@ export interface PJTabBarOptionsInterface {
   isRightItemSameHeightWithTabBar?: boolean
   isHideLeftItem?: boolean
   isHideRightItem?: boolean
-  edgeEffect?: EdgeEffect
+  tabBarEdgeEffect?: EdgeEffect
+  tabContentEdgeEffect?: EdgeEffect
   tabBarBackGround?: ResourceColor
   // tabbar整个内容的间距
   tabBarContentMargin?: Margin
   tabBarBorder?: BorderOptions
+  // tabbar的高度，默认由item内容撑开高度。
+  tabBarHeight?: number
   isTabBarWidthFillParent?: boolean
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean
   // 使item尽量滚到中间位置
@@ -73,6 +76,7 @@ export interface PJTabBarOptionsInterface {
   cachedCount: number
   disableSwipe: boolean
   displayArrow: [ArrowStyle | boolean, boolean]
+  expandSafeArea: [types?: Array<SafeAreaType>, edges?: Array<SafeAreaEdge>]
 }
 
 @Observed
@@ -120,10 +124,12 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   isRightItemSameHeightWithTabBar: boolean = true
   isHideLeftItem: boolean = false
   isHideRightItem: boolean = false
-  edgeEffect: EdgeEffect = EdgeEffect.Spring
+  tabBarEdgeEffect?: EdgeEffect = EdgeEffect.Spring
+  tabContentEdgeEffect?: EdgeEffect = EdgeEffect.Spring
   tabBarBackGround: ResourceColor = Color.White
   tabBarContentMargin: Margin = {top: 0, bottom: 0, left: 0, right: 0}
   tabBarBorder?: BorderOptions = undefined
+  tabBarHeight?: number
   isTabBarWidthFillParent?: boolean = true
   shouldScrollToCurrentIndexWhenTabBarWidthChanged?: boolean = true
   // 使item尽量滚到中间位置
@@ -134,6 +140,7 @@ export class PJTabBarOptions implements PJTabBarOptionsInterface {
   cachedCount: number = 1
   disableSwipe: boolean = false
   displayArrow: [ArrowStyle | boolean, boolean] = [false, false]
+  expandSafeArea: [types?: Array<SafeAreaType>, edges?: Array<SafeAreaEdge>] = [[SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM]]
 }
 
 /// 指示器位置（上，中，下）
