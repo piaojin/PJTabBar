@@ -78,6 +78,10 @@ PJTabComponent({
 }
 ````
 
+### 设置指示器滚动效果
+目前支持联动和普通滚动
+<font face="微软雅黑" size=3 color=#00ff66 >this.options.indicatorAnimationType = PJIndicatorAnimationType.Linkage</font>
+
 <font face="微软雅黑" size=5 color=#FF0000 >注意:</font>
 
 #### 1. ```contentBuilder```的传值方式，这种方式下```contentBuilder```中的```this```才是正确的， 通过this才能正确的访问到当前调用者的属性。```customerItemBuilder```, ```customerIndicatorBuilder```, ```leftItemBuilder```和```rightItemBuilder```等Builder类似。
