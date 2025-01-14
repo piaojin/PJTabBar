@@ -1,6 +1,6 @@
 {
   "name": "@piaojin/pjtabbar",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "PJTabBar是一个用于替换系统Tabs的控件，支持指示器联动，支持回收页面page，支持自定义指示器/tabbar item, 自定义tabbar item的布局(居左居中居右), 自定义tabbar的左右附加额外视图等。\nPJTabBar is a component used to replace system Tabs, supporting indicator linkage, page recycling, custom indicators/tab items, custom layout of tab items (left, center, right), adding additional views on the left and right sides of the tab bar and so on.",
   "main": "index.ets",
   "author": "piaojin",

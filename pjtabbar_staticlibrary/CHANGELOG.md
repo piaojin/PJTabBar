@@ -1,3 +1,7 @@
+## v1.1.2 [2025.1.14]
+1. 更新首页库地址描述
+2. 验证"1.1.1版本设置顶部透明不管用，会显示默认蓝色，底色也是黄色"问题是否修了
+
 ## v1.1.1 [2024.12.17] With My M4 Pro Mac Min🌝
 ### 修复以下Issues:
 1. 设置options.itemHeight=0时下面会有一段间距如何控制
@@ -14,7 +18,7 @@
 
 ## v1.0.9 [2024.08.28]
 1. PJTabComponent添加Swiper实现(设置enableRecycling = true), 当页签滑出屏幕外时，回收该页签内存以节省内存。
-回收时机依据`PJTabBarOptions`中的`cachedCount`属性值，e.g: cachedCount = 2, 页签有1，2，3，4，5，6，当页签1被滑动出去后并且当前滑动到页签4，此时页签1被回收, 页签2，3还在cache中(`cachedCount = 2`), 即`cachedCount`指可以被滑动出界面并且被缓存的页签数量。
+   回收时机依据`PJTabBarOptions`中的`cachedCount`属性值，e.g: cachedCount = 2, 页签有1，2，3，4，5，6，当页签1被滑动出去后并且当前滑动到页签4，此时页签1被回收, 页签2，3还在cache中(`cachedCount = 2`), 即`cachedCount`指可以被滑动出界面并且被缓存的页签数量。
 
 ## v1.0.8 [2024.08.27]
 1. 修复设置isSameWidthWithItem=true时，指示器从长变短时一闪而过，不平滑的问题。
@@ -62,17 +66,17 @@
 ## v1.0.0 [2024.07.05]
 
 - 已实现功能
-    1. 支持自定义指示器，TabBar Item, TabBar 左右附加视图。
-    2. 支持TabBar Item居左居中居右布局。
-    3. 支持更新，插入，删除TabBar Item。
+  1. 支持自定义指示器，TabBar Item, TabBar 左右附加视图。
+  2. 支持TabBar Item居左居中居右布局。
+  3. 支持更新，插入，删除TabBar Item。
 
 - 未支持功能
-    1. 由于本人没有Next开发权限，故还没适配OpenHarmony SDK:API12， 将来计划适配。
-    2. 指示器跟随TabContent的滑动而联动。
-    3. 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移，不知API12中该系统bug有没被修复。
-       修复方法见函数`fixScrollXoffsetIssueIfNeeded`
-    4. 已知系统Scroll导致的bug, 当Scroll设置edgeEffect = EdgeEffect.Spring的情况下把TabBar滑动到低并且横竖屏切换Scroll会出现整体向右偏移，不知API12中该系统bug有没被修复。
-    问题4目前的Workaround方式修复:
+  1. 由于本人没有Next开发权限，故还没适配OpenHarmony SDK:API12， 将来计划适配。
+  2. 指示器跟随TabContent的滑动而联动。
+  3. 已知系统Scroll导致的bug, 当Scroll内容不超出屏幕时并且Scroll设置edgeEffect = EdgeEffect.Spring的情况下，左滑Scroll会出现Scroll整体向右偏移，不知API12中该系统bug有没被修复。
+     修复方法见函数`fixScrollXoffsetIssueIfNeeded`
+  4. 已知系统Scroll导致的bug, 当Scroll设置edgeEffect = EdgeEffect.Spring的情况下把TabBar滑动到低并且横竖屏切换Scroll会出现整体向右偏移，不知API12中该系统bug有没被修复。
+     问题4目前的Workaround方式修复:
     ````
   在Scroll的回调onAreaChange中调用
   this.scroller.scrollEdge(Edge.Start)
